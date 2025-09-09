@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- MAPEAMENTO DOS ELEMENTOS ---
     const listContainer = document.getElementById('protocol-list');
     const mainTemplate = document.getElementById('list-item-template');
     const detailContent = document.getElementById('detail-content');
@@ -25,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedProtId = null;
     let protocolChart = null; 
 
-    // --- LÓGICA DE UI E RENDERIZAÇÃO ---
+    // UI e Renderização
     const determineStatus = (protocol) => {
         return (protocol.ENTREGA && protocol.ENTREGA.trim() !== '') 
             ? { text: 'Entregue', class: 'status-Entregue' } 
@@ -74,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Plugin customizado para desenhar o texto no centro do gráfico
+    // Desenhar o texto no centro do gráfico
     const centerTextPlugin = {
         id: 'centerText',
         beforeDraw: (chart) => {
@@ -85,14 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const centerY = chart.getDatasetMeta(0).data[0].y;
         
                 ctx.save();
-                // Estilo do número total
                 ctx.font = 'bold 24px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
                 ctx.fillStyle = 'var(--font-color)';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(total, centerX, centerY - 8);
                 
-                // Estilo do subtítulo "Total"
                 ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
                 ctx.fillStyle = 'var(--font-color-light)';
                 ctx.fillText('Total', centerX, centerY + 12);
@@ -101,10 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // Registra o plugin globalmente para que ele seja usado em todos os gráficos de rosca
     Chart.register(centerTextPlugin);
 
-    // FUNÇÃO DO GRÁFICO CORRIGIDA
     const updateChart = (protocols) => {
         let pendentes = 0;
         let entregues = 0;
@@ -118,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (protocolChart) {
-            // Se o gráfico já existe, apenas atualiza os dados
+            // Atualiza os dados
             protocolChart.data.datasets[0].data = [pendentes, entregues];
             protocolChart.update();
         } else {
@@ -141,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     responsive: true,
                     cutout: '70%',
                     plugins: {
-                        // Ativa nosso plugin para este gráfico específico
+                        // Ativa o plugin para o gráfico
                         centerText: {
                             display: true
                         },
@@ -159,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- CHAMADAS À API ---
+    // Chamada à API
     async function apiRequest(endpoint, method = 'GET', body = null) {
         const serverUrl = 'http://localhost:8001';
         try {
@@ -190,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- EVENT LISTENERS ---
     listContainer.addEventListener('click', (e) => {
         const li = e.target.closest('li');
         if (li) {
@@ -263,17 +257,15 @@ document.addEventListener('DOMContentLoaded', () => {
         renderList(filteredData);
     });
 
-    // --- INICIALIZAÇÃO ---
+    // Inicialização
     welcomeMessage.style.display = 'block';
     detailContent.style.display = 'none';
     refreshProtocols();
 });
 
-// Esta função fica exposta para ser chamada pelo Python (app.py)
 eel.expose(openMergerWindow, 'open_merger_window');
 function openMergerWindow(folderPath) {
-    // encodeURIComponent garante que caminhos com espaços ou caracteres especiais funcionem
     const url = `marger.html?folder_path=${encodeURIComponent(folderPath)}`;
-    // Usamos o window.open padrão do JavaScript para abrir a nova janela
+
     window.open(url, '_blank', 'width=700,height=600,left=200,top=200,resizable=yes');
 }

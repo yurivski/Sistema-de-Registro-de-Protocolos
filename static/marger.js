@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectAllCheckbox = document.getElementById('select-all');
     let currentFolderPath = '';
 
-    // Função para fazer requisições à API
+    // Fazer requisições à API
     async function apiRequest(endpoint, method = 'POST', body = null) {
         const serverUrl = 'http://localhost:8001';
         try {
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const result = await response.json();
 
-        pdfList.innerHTML = ''; // Limpa a mensagem "Carregando..."
+        pdfList.innerHTML = '';
         if (result.success) {
             if (result.files.length === 0) {
                 pdfList.innerHTML = '<li>Nenhum arquivo PDF encontrado nesta pasta.</li>';
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     li.appendChild(label);
                     pdfList.appendChild(li);
                 });
-                // Garante que o checkbox "Selecionar Todos" reflita o estado inicial
+
                 selectAllCheckbox.checked = true;
             }
         } else {
@@ -71,13 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Função para coletar arquivos selecionados ---
+    // --- Coletar arquivos selecionados
     function getSelectedFiles() {
         const selectedCheckboxes = document.querySelectorAll('.pdf-checkbox:checked');
         return Array.from(selectedCheckboxes).map(cb => cb.value);
     }
 
-    // --- Event Listeners ---
     selectAllCheckbox.addEventListener('change', () => {
         const allCheckboxes = document.querySelectorAll('.pdf-checkbox');
         allCheckboxes.forEach(checkbox => {
@@ -108,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         apiRequest('/api/merge_pdfs', 'POST', { 
             folder_path: currentFolderPath,
-            files_to_merge: selectedFiles, // Envia a lista de arquivos selecionados
+            files_to_merge: selectedFiles,
             remove_blank: true 
         });
     });
