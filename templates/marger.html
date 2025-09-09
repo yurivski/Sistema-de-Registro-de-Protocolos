@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesclar PDFs</title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Estilos específicos para esta janela */
+        body { padding: 0; }
+        .list-items li { 
+            margin-bottom: 5px; 
+            font-size: 0.9rem; 
+            background: none;
+            border: none;
+            box-shadow: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+        .list-items li:hover {
+            background-color: #eef2ff;
+        }
+        .list-items label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            width: 100%;
+        }
+        .list-items input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+        }
+        .select-all-container {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 10px;
+        }
+        .footer-actions { 
+            padding: 20px; 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="panel" style="border: none; height: 100vh;">
+        <div class="panel-header">Selecionar Arquivos para Mesclar</div>
+        <div class="panel-content">
+            <p>Selecione os arquivos que deseja incluir no documento final.</p>
+            <div class="select-all-container">
+                <label>
+                    <input type="checkbox" id="select-all">
+                    <strong>Selecionar Todos / Limpar Seleção</strong>
+                </label>
+            </div>
+            <ul class="list-items" id="pdf-list">
+                <li>Carregando...</li>
+            </ul>
+        </div>
+        <div class="footer-actions">
+            <button class="btn btn-primary" id="btn-merge">Mesclar Selecionados</button>
+            <button class="btn btn-primary" id="btn-merge-blank">Mesclar Selecionados (Removendo Páginas em Branco)</button>
+            <button class="btn btn-secondary" id="btn-new-folder">Escolher Nova Pasta</button>
+        </div>
+    </div>
+    <script src="/static/marger.js"></script>
+</body>
+</html>
