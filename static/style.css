@@ -62,7 +62,7 @@ body, html {
     transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
 }
 .list-items li:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.07); }
-/* ESTA É A REGRA QUE CRIA O CONTORNO DE SELEÇÃO */
+
 .list-items li.selected {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px var(--primary-color);
@@ -111,7 +111,6 @@ body, html {
 }
 ::-webkit-scrollbar-thumb:hover { background-color: #3730a3; }
 
-/* ADICIONADO: Estilos para o contêiner do gráfico */
 .chart-container {
     margin-top: 30px;
     padding: 0 10px;
