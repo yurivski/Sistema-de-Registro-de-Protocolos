@@ -4,7 +4,10 @@
 
 Sistema de desktop para gerenciamento de protocolos, construído com Python e tecnologias web. Oferece um CRUD completo, dashboard, geração de relatórios e um utilitário para manipulação de arquivos PDF.
 
-![Screenshot da Interface](imagem.png)
+![Screenshot da Interface](assets/dashboard.png)
+![Screenshot da Interface](assets/dashboard2.png)
+![Screenshot da Interface](assets/graphic.png)
+![Screenshot da Interface](assets/graphic2.png)
 
 ---
 
