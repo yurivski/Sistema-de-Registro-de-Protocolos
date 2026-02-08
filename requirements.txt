@@ -1,5 +1,16 @@
-Flask-Cors
-Flask
-eel
-pypdf
-reportlab
+# framework Web
+Flask>=3.0
+flask-cors>=4.0
+
+# Interface desktop
+Eel>=0.16
+
+# Banco de dados
+psycopg2-binary>=2.9
+
+# Variáveis de ambiente
+python-dotenv>=1.0
+
+# Manipulação de PDF
+pypdf>=4.0
+reportlab>=4.1
