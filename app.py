@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# ==============================================================================
-# 1. IMPORTAÇÕES DE BIBLIOTECAS
-# ==============================================================================
-
-# --- Biblioteca Padrão ---
 import glob
 import logging
 import os
@@ -17,7 +10,6 @@ import webbrowser
 from datetime import datetime
 from pathlib import Path
 
-# --- Bibliotecas de Terceiros ---
 from dotenv import load_dotenv
 import eel
 from flask import Flask, jsonify, request, send_from_directory
@@ -26,25 +18,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from pypdf import PdfReader, PdfWriter
 
-try:
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import (
-        SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    )
-    from reportlab.lib.enums import TA_CENTER, TA_LEFT
-    from reportlab.lib.units import cm
-    from reportlab.lib import colors
-except ImportError as e:
-    print(f"ERRO: Biblioteca necessária não encontrada: {e.name}")
-    print(f"Por favor, instale com 'pip install {e.name}'")
-    input("\nPressione ENTER para sair...")
-    sys.exit(1)
-
-
-# ==============================================================================
-# 2. CONFIGURAÇÃO DE CAMINHOS
-# ==============================================================================
+# CONFIGURAÇÃO DE CAMINHOS
 
 def get_application_path():
     """Retorna caminho base da aplicação (compatível com PyInstaller)."""
@@ -56,8 +30,8 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"S:\Microfilme\Atualizacao_sisregip_db",
-        r"\\10.1.214.66\same\Microfilme\Atualizacao_sisregip_db",
+        r"S:\Caminho_do_db",
+        r"\\00.0.000.00\caminho\db\postgresql",
     ]
 
     for path in network_paths:
@@ -89,10 +63,7 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s'
 )
 
-
-# ==============================================================================
-# 3. CONFIGURAÇÃO DO POSTGRESQL
-# ==============================================================================
+# CONFIGURAÇÃO DO POSTGRESQL
 
 load_dotenv()
 
@@ -120,11 +91,7 @@ def get_connection():
     """Retorna conexão com PostgreSQL."""
     return psycopg2.connect(**DB_CONFIG)
 
-
-# ==============================================================================
-# 4. FUNÇÕES AUXILIARES (extraídas para eliminar duplicação)
-# ==============================================================================
-
+# FUNÇÕES AUXILIARES (extraídas para eliminar duplicação)
 def parse_date(value, fmt='%d/%m/%Y'):
     """Converte string de data para date. Retorna None se inválido/vazio."""
     if not value or not value.strip():
@@ -322,17 +289,11 @@ def build_report_html(rows, total, entregues, pendentes):
 </body>
 </html>'''
 
-
-# ==============================================================================
-# 5. APLICAÇÃO FLASK
-# ==============================================================================
-
+# APLICAÇÃO FLASK
 app = Flask(__name__)
 CORS(app)
 
-
-# ---- Rotas de API: Protocolos ------------------------------------------------
-
+# Rotas de API: Protocolos 
 @app.route('/api/protocols', methods=['GET'])
 def get_protocols():
     """Retorna todos os protocolos ativos."""
@@ -449,7 +410,7 @@ def delete_protocol():
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
 
 
-# ---- Rota de API: Relatório --------------------------------------------------
+# Rota de API: Relatório 
 
 @app.route('/api/print/preview', methods=['POST'])
 def print_preview():
@@ -504,7 +465,7 @@ def print_preview():
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
 
 
-# ---- Rotas de API: PDF -------------------------------------------------------
+# Rotas de API: PDF 
 
 @app.route('/api/list_pdfs', methods=['POST'])
 def list_pdfs():
@@ -567,7 +528,7 @@ def merge_pdfs():
         return jsonify({"success": False, "message": f"Erro: {e}"}), 500
 
 
-# ---- Eel (ponte com desktop) ------------------------------------------------
+# Eel (ponte com desktop)
 
 @eel.expose
 def select_folder():
@@ -576,7 +537,7 @@ def select_folder():
     return None
 
 
-# ---- Rotas para PWA / arquivos estáticos -------------------------------------
+# Rotas para PWA / arquivos estáticos
 
 @app.route('/')
 def index():
@@ -617,10 +578,7 @@ def serve_logo():
     return send_from_directory('.', 'intendencia.png')
 
 
-# ==============================================================================
-# 6. INICIALIZAÇÃO
-# ==============================================================================
-
+# INICIALIZAÇÃO
 def run_flask():
     """Inicia servidor Flask."""
     app.run(host='0.0.0.0', port=8001, debug=False, use_reloader=False)
