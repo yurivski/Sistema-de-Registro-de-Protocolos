@@ -2,18 +2,54 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Registro de Protocolos - by: Cb Yuri (01/2018)</title>
-    <script type="text/javascript" src="/eel.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    
+    <!-- Meta tags PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SISREGIP">
+    <meta name="theme-color" content="#4338ca">
+    <meta name="description" content="Sistema de Registro de Protocolos do Hospital Central do Exército">
+    
+    <title>Sistema de Registro de Protocolos - by: Cb Yuri (2018/01)</title>
+    
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Ícones -->
     <link rel="icon" href="/icone.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="192x192" href="/static/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/static/icon-512.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    
+    <!-- Scripts e Estilos -->
+    <!-- eel.js carrega apenas se existir (modo janela nativa) -->
+    <script>
+        // Mock do eel para navegador (não faz nada se eel.js não carregar)
+        window.eel = window.eel || {
+            expose: function() {},
+            select_folder: function() { 
+                return function() { 
+                    alert('Função disponível apenas no modo desktop');
+                };
+            }
+        };
+    </script>
+    <script type="text/javascript" src="/eel.js" onerror="console.log('Eel não disponível - modo navegador')"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- CSS principal (OBRIGATÓRIO) -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- CSS mobile (OPCIONAL - carrega se existir) -->
+    <link rel="stylesheet" href="/static/style-mobile.css" onerror="console.log('CSS mobile não disponível - usando apenas CSS principal')">
 </head>
 <body>
     <div class="main-grid" id="main-view">
         <div class="panel navigation-panel">
             <div class="logo-container">
-                <img src="/intendência.png" alt="Logo Intendência">
+                <img src="/intendencia.png" alt="Logo Intendência" onerror="this.style.display='none'">
                 <h1>SISREGIP</h1>
                 <p>Sistema de Registro de Protocolos do Microfilme</p>
             </div>
@@ -66,6 +102,69 @@
         </div>
     </div>
 
+    <!-- Modal de Impressão REFORMULADO -->
+    <div id="print-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Opções de Impressão</h2>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha o período que deseja imprimir:</p>
+                
+                <div class="filter-options">
+                    <label class="radio-option">
+                        <input type="radio" name="print-filter" value="all" checked>
+                        <span>Todos os protocolos</span>
+                    </label>
+                    
+                    <label class="radio-option">
+                        <input type="radio" name="print-filter" value="month">
+                        <span>Mês específico</span>
+                    </label>
+                    <div class="filter-group" id="month-filter-group" style="display: none;">
+                        <label class="filter-label">Selecione o mês:</label>
+                        <select id="month-select" disabled>
+                            <option value="">Escolha um mês...</option>
+                            <option value="01">Janeiro</option>
+                            <option value="02">Fevereiro</option>
+                            <option value="03">Março</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Maio</option>
+                            <option value="06">Junho</option>
+                            <option value="07">Julho</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Setembro</option>
+                            <option value="10">Outubro</option>
+                            <option value="11">Novembro</option>
+                            <option value="12">Dezembro</option>
+                        </select>
+                        
+                        <label class="filter-label" style="margin-top: 10px;">Selecione o ano:</label>
+                        <select id="month-year-select" disabled>
+                            <option value="">Escolha um ano...</option>
+                        </select>
+                    </div>
+                    
+                    <label class="radio-option">
+                        <input type="radio" name="print-filter" value="year">
+                        <span>Ano específico</span>
+                    </label>
+                    <div class="filter-group" id="year-filter-group" style="display: none;">
+                        <label class="filter-label">Selecione o ano:</label>
+                        <select id="year-select" disabled>
+                            <option value="">Escolha um ano...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-print">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-print">Gerar Relatório</button>
+            </div>
+        </div>
+    </div>
+
     <template id="list-item-template">
         <li>
             <div class="item-header">
@@ -77,5 +176,35 @@
     </template>
     
     <script src="/static/script.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+    // Registra Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('❌ Falha ao registrar Service Worker:', error);
+                });
+        });
+    }
+
+    // Detecta se app pode ser instalado
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('📱 App pode ser instalado!');
+    });
+
+    // Detecta quando app é instalado
+    window.addEventListener('appinstalled', () => {
+        console.log('✅ App instalado com sucesso!');
+        deferredPrompt = null;
+    });
+    </script>
 </body>
 </html>
