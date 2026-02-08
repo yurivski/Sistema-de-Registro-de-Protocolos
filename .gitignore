@@ -1,32 +1,65 @@
-# Python Virtual Environments
-venv/
-env/
-.venv/
-.env/
+# ==============================================================================
+# GITIGNORE - Sistema de Protocolos
+# ==============================================================================
 
-# Python Bytecode and Cache
+# Variáveis de ambiente (SENHA DO BANCO!)
+.env
+
+# Arquivos Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Application-generated Files
-protocolos.db
-*.pdf
+# Virtual environments
+venv/
+ENV/
+env/
 
-# Log Files
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
 *.log
 app_errors.log
 
-# OS-specific Files
+# Banco de dados
+*.db
+*.sqlite
+*.sqlite3
+
+# Relatórios temporários
+relatorio_*.pdf
+relatorio_preview.html
+
+# Backups
+*.backup
+*.bak
+
+# Sistema operacional
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# IDE and Editor Configuration
-.vscode/
-.idea/
-
-# Secrets and Environment Files
-.env
-.env.*
-!.env.example
+# PyInstaller
+*.spec
