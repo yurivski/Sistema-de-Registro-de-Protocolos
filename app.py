@@ -30,8 +30,8 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"S:\Caminho_do_db",
-        r"\\00.0.000.00\caminho\db\postgresql",
+        r"/home/usuario\caminho_para_salvar_logs",
+        r"\\\00.0.000.00\caminho_para_salvar_logs", # Mesmo local via IP
     ]
 
     for path in network_paths:
@@ -47,7 +47,7 @@ def get_network_data_path():
             print(f"Caminho {path} não acessível: {e}")
             continue
 
-    local_path = os.path.join(os.path.expanduser('~'), 'SISREGIP_Data')
+    local_path = os.path.join(os.path.expanduser('~'), '/home/usuario/caminho_do_arquivo') # os.path.join ignora o ~ quando o segundo arg é caminho absoluto
     os.makedirs(local_path, exist_ok=True)
     print(f"AVISO: Usando pasta local: {local_path}")
     return local_path
