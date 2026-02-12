@@ -1,0 +1,44 @@
+{
+    "capturado_em": "2026-02-11T22:17:47.044090",
+    "tabela": "recebedor",
+    "qtd_colunas": 4,
+    "colunas": {
+        "id": {
+            "tipo": "INTEGER",
+            "not_null": true,
+            "default": "nextval('recebedor_id_seq'::regclass)",
+            "primary_key": true,
+            "unique": false,
+            "foreign_key": []
+        },
+        "nome": {
+            "tipo": "VARCHAR(200)",
+            "not_null": true,
+            "default": null,
+            "primary_key": false,
+            "unique": true,
+            "foreign_key": []
+        },
+        "ativo": {
+            "tipo": "BOOLEAN",
+            "not_null": false,
+            "default": "true",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "created_at": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        }
+    },
+    "indices": [
+        "idx_recebedor_nome",
+        "recebedor_nome_key"
+    ],
+    "constraints_check": []
+}

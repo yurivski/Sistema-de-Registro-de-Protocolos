@@ -1,0 +1,76 @@
+{
+    "capturado_em": "2026-02-11T22:17:47.059732",
+    "tabela": "usuario",
+    "qtd_colunas": 8,
+    "colunas": {
+        "id": {
+            "tipo": "INTEGER",
+            "not_null": true,
+            "default": "nextval('usuario_id_seq'::regclass)",
+            "primary_key": true,
+            "unique": false,
+            "foreign_key": []
+        },
+        "nome": {
+            "tipo": "VARCHAR(200)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "prontuario": {
+            "tipo": "VARCHAR(10)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "ativo": {
+            "tipo": "BOOLEAN",
+            "not_null": false,
+            "default": "true",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "created_at": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "updated_at": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "created_by": {
+            "tipo": "VARCHAR(100)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "updated_by": {
+            "tipo": "VARCHAR(100)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        }
+    },
+    "indices": [
+        "idx_usuario_ativo",
+        "idx_usuario_nome"
+    ],
+    "constraints_check": []
+}

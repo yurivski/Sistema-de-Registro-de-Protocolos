@@ -1,0 +1,84 @@
+{
+    "capturado_em": "2026-02-11T22:17:47.028394",
+    "tabela": "auditoria",
+    "qtd_colunas": 9,
+    "colunas": {
+        "id": {
+            "tipo": "INTEGER",
+            "not_null": true,
+            "default": "nextval('auditoria_id_seq'::regclass)",
+            "primary_key": true,
+            "unique": false,
+            "foreign_key": []
+        },
+        "tabela": {
+            "tipo": "VARCHAR(50)",
+            "not_null": true,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "operacao": {
+            "tipo": "VARCHAR(10)",
+            "not_null": true,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "registro_id": {
+            "tipo": "INTEGER",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "dados_antigos": {
+            "tipo": "JSONB",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "dados_novos": {
+            "tipo": "JSONB",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "usuario": {
+            "tipo": "VARCHAR(100)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "ip_address": {
+            "tipo": "VARCHAR(45)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "data_hora": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        }
+    },
+    "indices": [
+        "idx_auditoria_data",
+        "idx_auditoria_tabela"
+    ],
+    "constraints_check": []
+}

@@ -14,3 +14,8 @@ python-dotenv>=1.0
 # Manipulação de PDF
 pypdf>=4.0
 reportlab>=4.1
+
+# Extrator de metadados json
+sqlalchemy
+dotenv
+psycopg2 # Não foi usada mas é importante instalar no ambiente virtual

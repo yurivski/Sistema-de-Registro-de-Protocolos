@@ -1,0 +1,151 @@
+{
+    "capturado_em": "2026-02-11T22:17:47.044090",
+    "tabela": "protocolo",
+    "qtd_colunas": 13,
+    "colunas": {
+        "id": {
+            "tipo": "INTEGER",
+            "not_null": true,
+            "default": "nextval('protocolo_id_seq'::regclass)",
+            "primary_key": true,
+            "unique": false,
+            "foreign_key": []
+        },
+        "prot": {
+            "tipo": "VARCHAR(20)",
+            "not_null": true,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "data_protocolo": {
+            "tipo": "DATE",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "usuario_id": {
+            "tipo": "INTEGER",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": [
+                {
+                    "name": "protocolo_usuario_id_fkey",
+                    "constrained_columns": [
+                        "usuario_id"
+                    ],
+                    "referred_schema": null,
+                    "referred_table": "usuario",
+                    "referred_columns": [
+                        "id"
+                    ],
+                    "options": {
+                        "ondelete": "RESTRICT"
+                    },
+                    "comment": null
+                }
+            ]
+        },
+        "pmh": {
+            "tipo": "VARCHAR(10)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "data_entrega": {
+            "tipo": "DATE",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "recebedor_id": {
+            "tipo": "INTEGER",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": [
+                {
+                    "name": "protocolo_recebedor_id_fkey",
+                    "constrained_columns": [
+                        "recebedor_id"
+                    ],
+                    "referred_schema": null,
+                    "referred_table": "recebedor",
+                    "referred_columns": [
+                        "id"
+                    ],
+                    "options": {
+                        "ondelete": "RESTRICT"
+                    },
+                    "comment": null
+                }
+            ]
+        },
+        "observacoes": {
+            "tipo": "TEXT",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "ativo": {
+            "tipo": "BOOLEAN",
+            "not_null": false,
+            "default": "true",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "created_at": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "updated_at": {
+            "tipo": "TIMESTAMP",
+            "not_null": false,
+            "default": "CURRENT_TIMESTAMP",
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "created_by": {
+            "tipo": "VARCHAR(100)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        },
+        "updated_by": {
+            "tipo": "VARCHAR(100)",
+            "not_null": false,
+            "default": null,
+            "primary_key": false,
+            "unique": false,
+            "foreign_key": []
+        }
+    },
+    "indices": [
+        "idx_protocolo_ativo",
+        "idx_protocolo_data",
+        "idx_protocolo_prot",
+        "idx_protocolo_recebedor",
+        "idx_protocolo_usuario"
+    ],
+    "constraints_check": []
+}
