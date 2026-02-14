@@ -7,15 +7,13 @@ import sys
 import tempfile
 import threading
 import webbrowser
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 
-from dotenv import load_dotenv
 import eel
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-import psycopg2
-from psycopg2.extras import RealDictCursor
 from pypdf import PdfReader, PdfWriter
 
 # CONFIGURAÇÃO DE CAMINHOS
@@ -26,12 +24,12 @@ def get_application_path():
         return sys._MEIPASS
     return os.path.dirname(os.path.abspath(__file__))
 
-
+# Registro de logs de erros
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"/home/usuario\caminho_para_salvar_logs",
-        r"\\\00.0.000.00\caminho_para_salvar_logs", # Mesmo local via IP
+        r"S:\Microfilme\banco de dados",
+        r"",
     ]
 
     for path in network_paths:
@@ -47,7 +45,7 @@ def get_network_data_path():
             print(f"Caminho {path} não acessível: {e}")
             continue
 
-    local_path = os.path.join(os.path.expanduser('~'), '/home/usuario/caminho_do_arquivo') # os.path.join ignora o ~ quando o segundo arg é caminho absoluto
+    local_path = os.path.join(os.path.expanduser('~'), 'SISREGIP_Data')
     os.makedirs(local_path, exist_ok=True)
     print(f"AVISO: Usando pasta local: {local_path}")
     return local_path
@@ -63,33 +61,36 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s'
 )
 
-# CONFIGURAÇÃO DO POSTGRESQL
+# CONFIGURAÇÃO DO SQLITE - Caminho do banco de dados
+""" Migrando de PostgreSQL para SQLite (de novo) porque não tem ninguém nessa jossa que saiba administrar
+    o banco de dados quando eu for embora. É triste regredir em tecnologia.
+"""
+SQLITE_DB_PATH = r"S:\Microfilme\banco de dados\db_sqlite\protocolos_microfilme.db"
+SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
 
-load_dotenv()
-
-DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'port': int(os.getenv('DB_PORT', 5432)),
-    'database': os.getenv('DB_NAME', 'sistema_protocolos'),
-    'user': os.getenv('DB_USER', 'app_protocolos'),
-    'password': os.getenv('DB_PASSWORD'),
-    'client_encoding': 'UTF8',
-}
-
-if not DB_CONFIG['password']:
+if not os.path.exists(SQLITE_DB_PATH):
     print("=" * 60)
-    print("ERRO: Senha do banco de dados não configurada!")
-    print("=" * 60)
-    print("\nCrie um arquivo .env na raiz do projeto com:")
-    print("DB_PASSWORD=sua_senha_aqui")
+    print(f"ERRO: Banco SQLite não encontrado em:")
+    print(f"  {SQLITE_DB_PATH}")
     print("=" * 60)
     input("\nPressione ENTER para sair...")
     sys.exit(1)
 
 
 def get_connection():
-    """Retorna conexão com PostgreSQL."""
-    return psycopg2.connect(**DB_CONFIG)
+    """Retorna conexão com SQLite (Microfilme)."""
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def get_secretaria_connection():
+    """Retorna conexão READ-ONLY com SQLite (Secretaria SAME)."""
+    uri = f"file:{SECRETARIA_DB_PATH}?mode=ro"
+    conn = sqlite3.connect(uri, uri=True)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 # FUNÇÕES AUXILIARES (extraídas para eliminar duplicação)
 def parse_date(value, fmt='%d/%m/%Y'):
@@ -97,9 +98,19 @@ def parse_date(value, fmt='%d/%m/%Y'):
     if not value or not value.strip():
         return None
     try:
-        return datetime.strptime(value.strip(), fmt).date()
+        return datetime.strptime(value.strip(), fmt).date().isoformat()
     except ValueError:
         return None
+
+
+def format_date_br(date_str):
+    """Converte data ISO (YYYY-MM-DD) para formato BR (DD/MM/YYYY)."""
+    if not date_str or not date_str.strip():
+        return ''
+    try:
+        return datetime.strptime(date_str.strip(), '%Y-%m-%d').strftime('%d/%m/%Y')
+    except ValueError:
+        return date_str
 
 
 def get_or_none(value):
@@ -114,16 +125,16 @@ def resolve_usuario(cursor, nome, pmh=None):
     if not nome or not nome.strip():
         return None
 
-    cursor.execute('SELECT id FROM usuario WHERE nome = %s', (nome,))
+    cursor.execute('SELECT id FROM usuario WHERE nome = ?', (nome,))
     result = cursor.fetchone()
     if result:
         return result[0]
 
     cursor.execute(
-        'INSERT INTO usuario (nome, prontuario) VALUES (%s, %s) RETURNING id',
+        'INSERT INTO usuario (nome, prontuario) VALUES (?, ?)',
         (nome, get_or_none(pmh))
     )
-    return cursor.fetchone()[0]
+    return cursor.lastrowid
 
 
 def resolve_recebedor(cursor, nome):
@@ -131,16 +142,16 @@ def resolve_recebedor(cursor, nome):
     if not nome or not nome.strip():
         return None
 
-    cursor.execute('SELECT id FROM recebedor WHERE nome = %s', (nome,))
+    cursor.execute('SELECT id FROM recebedor WHERE nome = ?', (nome,))
     result = cursor.fetchone()
     if result:
         return result[0]
 
     cursor.execute(
-        'INSERT INTO recebedor (nome) VALUES (%s) RETURNING id',
+        'INSERT INTO recebedor (nome) VALUES (?)',
         (nome,)
     )
-    return cursor.fetchone()[0]
+    return cursor.lastrowid
 
 
 def open_file(filepath):
@@ -298,27 +309,39 @@ CORS(app)
 def get_protocols():
     """Retorna todos os protocolos ativos."""
     try:
-        with get_connection() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                # A query a seguir irá assimilar os títulos tanto do
-                # dashboard quanto da tabela no relatório em PDF.
-                cursor.execute('''
-                    SELECT
-                        p.id as "ID",
-                        p.prot as "PROT",
-                        TO_CHAR(p.data_protocolo, 'DD/MM/YYYY') as "DATA",
-                        u.nome as "NOME",
-                        p.pmh as "PMH",
-                        TO_CHAR(p.data_entrega, 'DD/MM/YYYY') as "ENTREGA",
-                        r.nome as "RECEBIMENTO"
-                    FROM protocolo p
-                    LEFT JOIN usuario u ON p.usuario_id = u.id
-                    LEFT JOIN recebedor r ON p.recebedor_id = r.id
-                    WHERE p.ativo = TRUE
-                    ORDER BY p.data_protocolo DESC
-                ''')
-                rows = cursor.fetchall()
-        return jsonify([dict(row) for row in rows])
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT
+                p.id as "ID",
+                p.prot as "PROT",
+                p.data_protocolo,
+                u.nome as "NOME",
+                p.pmh as "PMH",
+                p.data_entrega,
+                r.nome as "RECEBIMENTO"
+            FROM protocolo p
+            LEFT JOIN usuario u ON p.usuario_id = u.id
+            LEFT JOIN recebedor r ON p.recebedor_id = r.id
+            WHERE p.ativo = 1
+            ORDER BY p.data_protocolo DESC
+        ''')
+        rows = cursor.fetchall()
+        conn.close()
+
+        # Formatar datas para DD/MM/YYYY no Python
+        result = []
+        for row in rows:
+            result.append({
+                "ID": row["ID"],
+                "PROT": row["PROT"],
+                "DATA": format_date_br(row["data_protocolo"]),
+                "NOME": row["NOME"],
+                "PMH": row["PMH"],
+                "ENTREGA": format_date_br(row["data_entrega"]),
+                "RECEBIMENTO": row["RECEBIMENTO"],
+            })
+        return jsonify(result)
     except Exception:
         logging.error("Erro em get_protocols", exc_info=True)
         return jsonify({"success": False, "message": "Erro ao buscar protocolos."}), 500
@@ -329,27 +352,29 @@ def add_protocol():
     """Adiciona novo protocolo."""
     try:
         data = request.json
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                data_protocolo = parse_date(data.get('DATA'))
-                data_entrega = parse_date(data.get('ENTREGA'))
-                pmh = get_or_none(data.get('PMH'))
-                usuario_id = resolve_usuario(cursor, data.get('NOME'), pmh)
-                recebedor_id = resolve_recebedor(cursor, data.get('RECEBIMENTO'))
+        conn = get_connection()
+        cursor = conn.cursor()
 
-                cursor.execute('''
-                    INSERT INTO protocolo
-                    (prot, data_protocolo, usuario_id, pmh, data_entrega, recebedor_id)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (
-                    data['PROT'],
-                    data_protocolo,
-                    usuario_id,
-                    pmh,
-                    data_entrega,
-                    recebedor_id,
-                ))
-            conn.commit()
+        data_protocolo = parse_date(data.get('DATA'))
+        data_entrega = parse_date(data.get('ENTREGA'))
+        pmh = get_or_none(data.get('PMH'))
+        usuario_id = resolve_usuario(cursor, data.get('NOME'), pmh)
+        recebedor_id = resolve_recebedor(cursor, data.get('RECEBIMENTO'))
+
+        cursor.execute('''
+            INSERT INTO protocolo
+            (prot, data_protocolo, usuario_id, pmh, data_entrega, recebedor_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data['PROT'],
+            data_protocolo,
+            usuario_id,
+            pmh,
+            data_entrega,
+            recebedor_id,
+        ))
+        conn.commit()
+        conn.close()
         return jsonify({"success": True, "message": "Protocolo adicionado com sucesso."})
     except Exception as e:
         logging.error("Erro em add_protocol", exc_info=True)
@@ -361,31 +386,33 @@ def edit_protocol():
     """Edita protocolo existente."""
     try:
         data = request.json
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                data_protocolo = parse_date(data.get('DATA'))
-                data_entrega = parse_date(data.get('ENTREGA'))
-                pmh = get_or_none(data.get('PMH'))
-                usuario_id = resolve_usuario(cursor, data.get('NOME'), pmh)
-                recebedor_id = resolve_recebedor(cursor, data.get('RECEBIMENTO'))
+        conn = get_connection()
+        cursor = conn.cursor()
 
-                cursor.execute('''
-                    UPDATE protocolo
-                    SET data_protocolo = %s,
-                        usuario_id = %s,
-                        pmh = %s,
-                        data_entrega = %s,
-                        recebedor_id = %s
-                    WHERE prot = %s AND ativo = TRUE
-                ''', (
-                    data_protocolo,
-                    usuario_id,
-                    pmh,
-                    data_entrega,
-                    recebedor_id,
-                    data['PROT'],
-                ))
-            conn.commit()
+        data_protocolo = parse_date(data.get('DATA'))
+        data_entrega = parse_date(data.get('ENTREGA'))
+        pmh = get_or_none(data.get('PMH'))
+        usuario_id = resolve_usuario(cursor, data.get('NOME'), pmh)
+        recebedor_id = resolve_recebedor(cursor, data.get('RECEBIMENTO'))
+
+        cursor.execute('''
+            UPDATE protocolo
+            SET data_protocolo = ?,
+                usuario_id = ?,
+                pmh = ?,
+                data_entrega = ?,
+                recebedor_id = ?
+            WHERE prot = ? AND ativo = 1
+        ''', (
+            data_protocolo,
+            usuario_id,
+            pmh,
+            data_entrega,
+            recebedor_id,
+            data['PROT'],
+        ))
+        conn.commit()
+        conn.close()
         return jsonify({"success": True, "message": "Protocolo editado com sucesso."})
     except Exception as e:
         logging.error("Erro em edit_protocol", exc_info=True)
@@ -397,13 +424,14 @@ def delete_protocol():
     """Deleta protocolo (soft delete)."""
     try:
         data = request.json
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    'UPDATE protocolo SET ativo = FALSE WHERE id = %s',
-                    (data['ID'],)
-                )
-            conn.commit()
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'UPDATE protocolo SET ativo = 0 WHERE id = ?',
+            (data['ID'],)
+        )
+        conn.commit()
+        conn.close()
         return jsonify({"success": True, "message": "Protocolo excluído com sucesso."})
     except Exception as e:
         logging.error("Erro em delete_protocol", exc_info=True)
@@ -414,39 +442,53 @@ def delete_protocol():
 
 @app.route('/api/print/preview', methods=['POST'])
 def print_preview():
-    """Gera preview HTML do relatório - com COALESCE para campos vazios."""
+    """Gera preview HTML do relatório."""
     try:
         data = request.json
         filter_type = data.get('filter_type', 'all')
         filter_value = data.get('filter_value', '')
 
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                query = '''
-                    SELECT
-                        COALESCE(p.prot, '') as prot,
-                        COALESCE(TO_CHAR(p.data_protocolo, 'DD/MM/YYYY'), '') as data,
-                        COALESCE(u.nome, '') as nome,
-                        COALESCE(p.pmh, '') as pmh,
-                        COALESCE(TO_CHAR(p.data_entrega, 'DD/MM/YYYY'), '') as entrega,
-                        COALESCE(r.nome, '') as recebedor
-                    FROM protocolo p
-                    LEFT JOIN usuario u ON p.usuario_id = u.id
-                    LEFT JOIN recebedor r ON p.recebedor_id = r.id
-                    WHERE p.ativo = TRUE
-                '''
-                params = []
+        conn = get_connection()
+        cursor = conn.cursor()
 
-                if filter_type == 'month' and filter_value:
-                    query += " AND TO_CHAR(p.data_protocolo, 'YYYY-MM') = %s"
-                    params.append(filter_value)
-                elif filter_type == 'year' and filter_value:
-                    query += " AND EXTRACT(YEAR FROM p.data_protocolo) = %s"
-                    params.append(int(filter_value))
+        query = '''
+            SELECT
+                COALESCE(p.prot, '') as prot,
+                p.data_protocolo,
+                COALESCE(u.nome, '') as nome,
+                COALESCE(p.pmh, '') as pmh,
+                p.data_entrega,
+                COALESCE(r.nome, '') as recebedor
+            FROM protocolo p
+            LEFT JOIN usuario u ON p.usuario_id = u.id
+            LEFT JOIN recebedor r ON p.recebedor_id = r.id
+            WHERE p.ativo = 1
+        '''
+        params = []
 
-                query += " ORDER BY p.prot"
-                cursor.execute(query, params)
-                rows = cursor.fetchall()
+        if filter_type == 'month' and filter_value:
+            query += " AND strftime('%Y-%m', p.data_protocolo) = ?"
+            params.append(filter_value)
+        elif filter_type == 'year' and filter_value:
+            query += " AND strftime('%Y', p.data_protocolo) = ?"
+            params.append(str(filter_value))
+
+        query += " ORDER BY p.prot"
+        cursor.execute(query, params)
+        raw_rows = cursor.fetchall()
+        conn.close()
+
+        # Formatar datas para DD/MM/YYYY
+        rows = []
+        for row in raw_rows:
+            rows.append((
+                row['prot'],
+                format_date_br(row['data_protocolo']),
+                row['nome'],
+                row['pmh'],
+                format_date_br(row['data_entrega']),
+                row['recebedor'],
+            ))
 
         total = len(rows)
         entregues = sum(1 for row in rows if row[4] and row[4].strip())
@@ -463,6 +505,57 @@ def print_preview():
     except Exception as e:
         logging.error("Erro em print_preview", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
+
+
+# Rota de API: Secretaria SAME (somente leitura)
+
+@app.route('/api/secretaria/protocols', methods=['GET'])
+def get_secretaria_protocols():
+    """Retorna todos os protocolos da Secretaria SAME (read-only)."""
+    try:
+        if not os.path.exists(SECRETARIA_DB_PATH):
+            return jsonify({
+                "success": False,
+                "message": "Banco da Secretaria não encontrado na rede."
+            }), 404
+
+        conn = get_secretaria_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT
+                id,
+                COALESCE(protocolo, '') as protocolo,
+                COALESCE(prontuario, '') as prontuario,
+                COALESCE(nome, '') as nome,
+                COALESCE(data_prot, '') as data_prot,
+                COALESCE(finalidade, '') as finalidade,
+                COALESCE(alta, '') as alta,
+                COALESCE(obs, '') as obs
+            FROM protocolos
+            ORDER BY id DESC
+        ''')
+        rows = cursor.fetchall()
+        conn.close()
+
+        result = []
+        for row in rows:
+            result.append({
+                "id": row["id"],
+                "protocolo": row["protocolo"],
+                "prontuario": row["prontuario"],
+                "nome": row["nome"],
+                "data_prot": row["data_prot"],
+                "finalidade": row["finalidade"],
+                "alta": row["alta"],
+                "obs": row["obs"],
+            })
+        return jsonify(result)
+    except Exception:
+        logging.error("Erro em get_secretaria_protocols", exc_info=True)
+        return jsonify({
+            "success": False,
+            "message": "Erro ao buscar dados da Secretaria."
+        }), 500
 
 
 # Rotas de API: PDF 
@@ -563,15 +656,6 @@ def serve_manifest():
     return send_from_directory('static', 'manifest.json')
 
 
-@app.route('/service-worker.js')
-def serve_sw():
-    """Serve o service worker."""
-    response = send_from_directory('.', 'service-worker.js')
-    response.headers['Service-Worker-Allowed'] = '/'
-    response.headers['Cache-Control'] = 'no-cache'
-    return response
-
-
 @app.route('/intendencia.png')
 def serve_logo():
     """Serve logo da intendência."""
@@ -598,18 +682,20 @@ if __name__ == '__main__':
     if is_service:
         # MODO SERVIÇO: Apenas Flask, sem Eel
         print("=" * 60)
-        print("SISREGIP - MODO SERVIÇO")
+        print("SISREGIP - MODO SERVIÇO (SQLite)")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
+        print(f"Banco SQLite: {SQLITE_DB_PATH}")
         print("Acesse: http://localhost:8001")
         print("=" * 60)
         run_flask()
     else:
         # MODO DESKTOP: Eel + Flask
         print("=" * 60)
-        print("SISREGIP - MODO DESKTOP")
+        print("SISREGIP - MODO DESKTOP (SQLite)")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
+        print(f"Banco SQLite: {SQLITE_DB_PATH}")
         print("Iniciando interface...")
         print("=" * 60)
 
@@ -620,10 +706,11 @@ if __name__ == '__main__':
 
         try:
             eel.start(
-                'templates/index.html',
+                {'port': 8001},
                 mode='chrome',
                 size=(1280, 760),
                 position=(100, 100),
+                port=0
             )
         except (IOError, SystemError) as e:
             print(f"\nErro ao iniciar interface Eel: {e}")

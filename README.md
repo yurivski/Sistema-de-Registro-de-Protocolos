@@ -1,140 +1,93 @@
-# SISREGIP - Sistema de Registro de Protocolos
+# SISREGIP
 
-[![Licença: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+**Sistema de Registro de Protocolos do SAME — Hospital Central do Exército**
 
-Sistema de desktop para gerenciamento de protocolos, construído com Python e tecnologias web. Oferece um CRUD completo, dashboard, geração de relatórios e um utilitário para manipulação de arquivos PDF.
-
-![Screenshot da Interface](assets/dashboard.png)
-![Screenshot da Interface](assets/dashboard2.png)
-![Screenshot da Interface](assets/graphic.png)
-![Screenshot da Interface](assets/graphic2.png)
+Desenvolvido por Cb Yuri (2018/01) — Seção de Microfilme / Estatística - SAME - HCE
 
 ---
 
-## 📖 Table of Contents
+## Sobre o sistema
 
-- [SISREGIP - Sistema de Registro de Protocolos](#sisregip---sistema-de-registro-de-protocolos)
-  - [📖 Table of Contents](#-table-of-contents)
-  - [💡 About](#-about)
-  - [🚀 Features](#-features)
-  - [🛠️ Tech Stack](#️-tech-stack)
-  - [⚙️ Prerequisites](#️-prerequisites)
-  - [🔧 Installation](#-installation)
-  - [▶️ Usage](#️-usage)
-  - [📁 Project Structure](#-project-structure)
-  - [📄 License](#-license)
+O SISREGIP é um sistema interno para gerenciar os protocolos da seção de estatística e microfilme do Serviço de Arquivo Médico e Estatística do Hospital Central do Exército. Ele registra a entrada, saída e entrega de documentos microfilmados / copiados, permitindo controle completo do fluxo de protocolos entre as seções do setor.
+
+Na prática, ele substitui a planilha Excel que todos no setor se confundem para salvar, editar ou acrescentar dados, gerando diversos arquivos mal formatados, com nomes de arquivos renomeados cada vez que fosse usado e salvando como novo, gerando confusão e ocupando armazenamento devido à pouca instrução sobre o uso de Excel por parte dos militares.   
+
+Imagem da tela inicial:
+
+![Dashboard principal do SISREGIP](/imagens/tela_inicial_1.png)   
+![Dashboard principal do SISREGIP](/imagens/tela_inicial_2.png)
 
 ---
 
-## <a name="about"></a>💡 About
+## O que ele faz
 
-Este sistema foi criado para modernizar e centralizar o controle sobre a entrada e saída de protocolos. Ele permite que múltiplos usuários em uma rede local registrem, editem, consultem e gerenciem o status de cada protocolo (Pendente ou Entregue) de forma centralizada em um único banco de dados SQLite.
+O sistema permite cadastrar, editar e excluir protocolos com controle de status (pendente ou entregue), consultar os dados da Secretaria SAME em modo somente leitura direto do dashboard, gerar relatórios filtrados por mês ou ano com preview no navegador, e acompanhar a situação operacional com gráficos em tempo real.
 
-Além do gerenciamento de protocolos, a aplicação inclui ferramentas para o dia a dia, como a geração de relatórios em PDF e um utilitário para mesclar múltiplos arquivos PDF em um só, com a opção de remover páginas em branco automaticamente.
+Ele roda como um servidor local acessível por qualquer máquina da rede interna do setor via navegador, sem necessidade de instalar nada nos computadores clientes.   
+
+Imagem da tela inicial, visão web:
+
+![Lista de protocolos com status](/imagens/visao_web.png)
+![Lista de protocolos com status](/imagens/visao_web_2.png)
+---
+
+## Consulta à Secretaria SAME
+
+Uma das funcionalidades acrescentadas em substituição à anterior (Mesclar PDF) do sistema é a visualização dos protocolos da Secretaria SAME. Ao clicar no botão no painel lateral, abre um painel com todos os registros da Secretaria em formato de tabela, com busca por nome, prontuário ou protocolo, e um gráfico mostrando o volume de registros por mês.
+
+Essa consulta é somente leitura. O SISREGIP não altera nenhum dado da Secretaria — ele apenas lê o banco deles para facilitar a conferência cruzada entre as seções.
+
+![Modal da Secretaria SAME](/imagens/dados_da_secretaria.png)
+![Modal da Secretaria SAME](/imagens/dados_da_secretaria_2.png)
 
 ---
 
-## <a name="features"></a>🚀 Features
+## Relatórios
 
-* **Gerenciamento CRUD Completo:** Crie, leia, atualize e delete registros de protocolos.
-* **Banco de Dados Centralizado:** Permite acesso simultâneo em rede local.
-* **Dashboard Visual:** Gráfico em tempo real exibe a proporção de protocolos pendentes e entregues.
-* **Filtro Dinâmico:** Pesquisa instantânea por número de protocolo ou nome.
-* **Geração de Relatórios:** Exporta todos os registros para um arquivo PDF com um único clique.
-* **Utilitário de PDF Integrado:**
-    * Mescla múltiplos arquivos PDF em um único documento.
-    * Remove páginas em branco automaticamente durante a mesclagem.
+O sistema gera relatórios em HTML que abrem direto no navegador, prontos para imprimir. Dá para filtrar por todos os protocolos, por um mês específico ou por ano. O relatório mostra o resumo de totais (entregues, pendentes) e a tabela completa.
+
+Imagem do modelo de relatório:
+
+![Preview do relatório](/imagens/relatorio_1.png)
+![Preview do relatório](/imagens/relatorio_2.png)
+![Preview do relatório](/imagens/gerar_relatorio_1.png)
+![Preview do relatório](/imagens/gerar_relatorio_2.png)
+---
+
+## Stack técnica
+
+O backend é Python com Flask servindo uma API REST. O frontend é HTML e JavaScript puro, com Tailwind CSS, um framework CSS. Os gráficos são feitos com Chart.js. O banco de dados é SQLite. O sistema é empacotado como executável Windows com PyInstaller e distribuído com instalador Inno Setup.
 
 ---
 
-## <a name="tech-stack"></a>🛠️ Tech Stack
+## Por que SQLite e não PostgreSQL
 
-As seguintes tecnologias foram utilizadas na construção do projeto:
+O sistema nasceu usando SQLite no princípio, migrei para PostgreSQL e precisei voltar com SQLite devido ao meu limite de tempo de serviço como militar temporário e sem militar substituto com conhecimento prático em Gerenciamento de Banco de Dados. Funcionava bem enquanto eu estava presente pra administrar o servidor. O problema é que o PostgreSQL precisa de um serviço rodando na máquina, precisa de configuração (host, porta, usuário, senha), e precisa de alguém que saiba o que fazer quando ele para de funcionar.
 
-* **Backend:** Python 3, Flask, SQLite 3, ReportLab, PyPDF
-* **GUI Híbrida:** Eel (Python + Web)
-* **Frontend:** HTML5, CSS3, JavaScript (Vanilla JS), Chart.js
+Quando eu sair do Exército em março de 2026, ninguém aqui vai saber dar manutenção num servidor PostgreSQL. Ninguém vai saber reiniciar o serviço, verificar logs, ajustar permissões ou recriar o banco se algo corromper. E eu não posso deixar um sistema que depende de mim pra continuar funcionando.
 
----
+O SQLite resolve isso. O banco é um arquivo único que fica numa pasta de rede. Não tem servidor, não tem serviço, não tem senha. Se o sistema travar, é só reiniciar o executável. Se o banco corromper (improvável, mas possível), é só restaurar o backup — que é literalmente copiar um arquivo. Qualquer pessoa consegue fazer isso.
 
-## <a name="prerequisites"></a>⚙️ Prerequisites
+Essa decisão não foi técnica. Foi operacional. O PostgreSQL é tecnicamente superior em quase tudo. Mas superioridade técnica não importa se o sistema para de funcionar no dia seguinte à minha saída porque ninguém sabe manter o que eu deixei.
 
-Para rodar este projeto, você precisará ter o seguinte instalado:
-
-* Python 3.8+
-* PIP (Gerenciador de Pacotes Python)
-* Google Chrome ou Microsoft Edge
+Regredir de tecnologia às vezes é a decisão certa dependendo do contexto.
 
 ---
 
-## <a name="installation"></a>🔧 Installation
+## Requisitos
 
-Siga os passos abaixo para configurar o ambiente de desenvolvimento.
-
-1.  Clone o repositório para sua máquina local:
-    ```bash
-    git clone [https://github.com/yurivski/Sistema-de-Registro-de-Protocolos.git](https://github.com/yurivski/Sistema-de-Registro-de-Protocolos.git)
-    cd Sistema-de-Registro-de-Protocolos
-    ```
-
-2.  Crie e ative um ambiente virtual:
-    ```bash
-    # Criar o ambiente
-    python -m venv venv
-    
-    # Ativar no Windows
-    .\venv\Scripts\activate
-    
-    # Ativar no macOS/Linux: source venv/bin/activate
-    ```
-
-3.  Instale as dependências do projeto a partir do arquivo `requirements.txt`:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-4.  Configure o caminho do banco de dados em rede editando a variável `network_db_full_path` no arquivo `app.py`.
+O sistema roda em Windows 10/11 (64-bit) e precisa de acesso à rede interna do hospital para ler os bancos de dados na unidade S:\. Pode ser usado com o navegador preferido do usuário. Não é necessário instalar Python, PostgreSQL ou qualquer outra dependência nas máquinas clientes.
 
 ---
 
-## <a name="usage"></a>▶️ Usage
+## Instalação
 
-Com o ambiente virtual ativado, inicie a aplicação executando o script principal:
-
-```bash
-python app.py
-```
-
-A janela do sistema será aberta automaticamente.
+Basta executar o instalador SISREGIP_Setup_v2.0.0.exe como administrador. Ele cria o atalho na área de trabalho, configura o firewall automaticamente e já deixa o sistema pronto pra uso. Sem wizard de banco de dados, sem configuração manual.
 
 ---
 
-## <a name="project-structure"></a>📁 Project Structure
+## Contato
 
-```
-/Sistema-de-Registro-de-Protocolos/
-├── static/
-│   ├── script.js
-│   ├── marger.js
-│   └── style.css
-├── templates/
-│   ├── index.html
-│   └── marger.html
-├── assets/
-│   ├── dashboard.png
-│   └── dashboard2.png
-│   └── graphic.png
-│   └── graphic2.png
-├── .gitignore
-├── app.py
-├── icone.ico
-├── imagem.png
-├── LICENSE
-└── README.md
-```
+Desenvolvido durante o período de serviço militar no HCE (2018-2026).
 
----
-
-## <a name="license"></a>📄 License
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Em caso de problemas técnicos após minha saída, o sistema foi projetado pra não precisar de suporte. Mas se precisar, o código-fonte está documentado e acessível na pasta do projeto.

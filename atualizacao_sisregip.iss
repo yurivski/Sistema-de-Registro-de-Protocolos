@@ -1,11 +1,11 @@
 ; ==============================================================================
-; SISREGIP - Inno Setup Script SIMPLES
+; SISREGIP - Inno Setup Script v2.0 (SQLite)
 ; Sistema de Registro de Protocolos do Microfilme
 ; ==============================================================================
 
 #define MyAppName "SISREGIP"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "Cb Yuri - HCE"
+#define MyAppVersion "2.0.0"
+#define MyAppPublisher "Cb Yuri (2018/01) - HCE"
 #define MyAppURL "http://localhost:8001"
 #define MyAppExeName "SISREGIP.exe"
 
@@ -51,18 +51,25 @@ Name: "desktopicon"; Description: "Criar atalho na Área de Trabalho"; GroupDesc
 Name: "startupicon"; Description: "Iniciar automaticamente com o Windows"; GroupDescription: "Inicialização:"
 
 [Files]
+; Executável principal
 Source: "C:\Sistema_microfilme\dist\SISREGIP.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Sistema_microfilme\.env"; DestDir: "{app}"; Flags: ignoreversion confirmoverwrite
-Source: "C:\Sistema_microfilme\templates\*"; DestDir: "{app}\templates"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\Sistema_microfilme\static\*"; DestDir: "{app}\static"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; Frontend
+Source: "C:\Sistema_microfilme\templates\index.html"; DestDir: "{app}\templates"; Flags: ignoreversion
+Source: "C:\Sistema_microfilme\static\style.css"; DestDir: "{app}\static"; Flags: ignoreversion
+Source: "C:\Sistema_microfilme\static\script.js"; DestDir: "{app}\static"; Flags: ignoreversion
+Source: "C:\Sistema_microfilme\static\manifest.json"; DestDir: "{app}\static"; Flags: ignoreversion
+Source: "C:\Sistema_microfilme\static\icon-192.png"; DestDir: "{app}\static"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "C:\Sistema_microfilme\static\icon-512.png"; DestDir: "{app}\static"; Flags: ignoreversion skipifsourcedoesntexist
+
+; Assets
 Source: "C:\Sistema_microfilme\intendencia.png"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Sistema_microfilme\icone.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Sistema_microfilme\service-worker.js"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Sistema_microfilme\service-worker.js"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Comment: "Iniciar {#MyAppName}"
 Name: "{group}\{#MyAppName} (Navegador)"; Filename: "http://localhost:8001"; Comment: "Abrir no navegador"
-Name: "{group}\Configurar Banco de Dados"; Filename: "notepad.exe"; Parameters: "{app}\.env"
 Name: "{group}\Desinstalar {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startupicon
@@ -81,50 +88,3 @@ Filename: "netsh"; Parameters: "advfirewall firewall delete rule name=""SISREGIP
 Type: filesandordirs; Name: "{app}\templates"
 Type: filesandordirs; Name: "{app}\static"
 Type: files; Name: "{app}\*.log"
-
-[Code]
-var
-  PostgreSQLPage: TInputQueryWizardPage;
-  
-procedure InitializeWizard;
-begin
-  PostgreSQLPage := CreateInputQueryPage(wpSelectTasks,
-    'Configuração do Banco de Dados',
-    'Configure a conexão com o PostgreSQL',
-    'Informe os dados de conexão. Você pode alterar depois editando o arquivo .env');
-  
-  PostgreSQLPage.Add('Servidor (IP ou localhost):', False);
-  PostgreSQLPage.Add('Porta:', False);
-  PostgreSQLPage.Add('Nome do Banco:', False);
-  PostgreSQLPage.Add('Usuário:', False);
-  PostgreSQLPage.Add('Senha:', True);
-  
-  PostgreSQLPage.Values[0] := 'localhost';
-  PostgreSQLPage.Values[1] := '5432';
-  PostgreSQLPage.Values[2] := 'sistema_protocolos';
-  PostgreSQLPage.Values[3] := 'postgres';
-  PostgreSQLPage.Values[4] := '';
-end;
-
-procedure CurStepChanged(CurStep: TSetupStep);
-var
-  EnvFile: TStringList;
-  EnvPath: String;
-begin
-  if CurStep = ssPostInstall then
-  begin
-    EnvPath := ExpandConstant('{app}\.env');
-    EnvFile := TStringList.Create;
-    try
-      EnvFile.Add('# CONFIGURACAO DO BANCO DE DADOS');
-      EnvFile.Add('DB_HOST=' + PostgreSQLPage.Values[0]);
-      EnvFile.Add('DB_PORT=' + PostgreSQLPage.Values[1]);
-      EnvFile.Add('DB_NAME=' + PostgreSQLPage.Values[2]);
-      EnvFile.Add('DB_USER=' + PostgreSQLPage.Values[3]);
-      EnvFile.Add('DB_PASSWORD=' + PostgreSQLPage.Values[4]);
-      EnvFile.SaveToFile(EnvPath);
-    finally
-      EnvFile.Free;
-    end;
-  end;
-end;

@@ -1,12 +1,6 @@
+<!-- index.html -->
+
 <!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    
-    <!-- Meta tags PWA -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -17,10 +11,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SISREGIP">
-    <meta name="theme-color" content="#4338ca">
+    <meta name="theme-color" content="#0F1117">
     <meta name="description" content="Sistema de Registro de Protocolos do Hospital Central do Exército">
 
-    <title>Sistema de Registro de Protocolos - by: Cb Yuri (2018/01)</title>
+    <title>SISREGIP — Sistema de Registro de Protocolos</title>
 
     <!-- Manifest PWA -->
     <link rel="manifest" href="/manifest.json">
@@ -31,7 +25,12 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/static/icon-512.png">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
 
-    <!-- Eel: mock para modo navegador (deve vir ANTES do eel.js) -->
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Eel: mock para modo navegador -->
     <script>
         window.eel = window.eel || {
             expose: function() {},
@@ -50,132 +49,204 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="/static/style-mobile.css">
 </head>
 <body>
 
-    <!-- LAYOUT PRINCIPAL (3 painéis) -->
+    <!-- BARRA SUPERIOR TÁTICA -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <div class="top-bar-insignia">
+                <img src="/intendencia.png" alt="Intendência" onerror="this.style.display='none'">
+            </div>
+            <div class="top-bar-title">
+                <span class="top-bar-name">SISREGIP</span>
+                <span class="top-bar-subtitle">DESENVOLVIDO POR: CB YURI (2018/01) — SAME</span>
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <div class="top-bar-status" id="connection-status">
+                <span class="status-dot online"></span>
+                <span>OPERACIONAL</span>
+            </div>
+            <div class="top-bar-clock" id="header-clock"></div>
+        </div>
+    </header>
 
+    <!-- LAYOUT PRINCIPAL (3 painéis) -->
     <div class="main-grid" id="main-view">
 
         <!-- Painel esquerdo: Navegação + Gráfico -->
         <div class="panel navigation-panel">
-            <div class="logo-container">
-                <img src="/intendencia.png" alt="Logo Intendência" onerror="this.style.display='none'">
-                <h1>SISREGIP</h1>
-                <p>Sistema de Registro de Protocolos do Microfilme</p>
-            </div>
+            <div class="panel-section">
+                <div class="section-label">OPERAÇÕES</div>
 
-            <div class="panel-content">
-                <button type="button" class="btn btn-secondary btn-full" id="btn-imprimir">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2.5">
+                <button type="button" class="btn-tactical" id="btn-imprimir">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="6 9 6 2 18 2 18 9"/>
                         <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
                         <rect width="12" height="8" x="6" y="14"/>
                     </svg>
-                    <span>Imprimir Relatório</span>
+                    <span>GERAR RELATÓRIO</span>
                 </button>
 
-                <button type="button" class="btn btn-secondary btn-full" id="btn-open-merger"
-                        style="margin-top: 10px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                         fill="none" stroke="currentColor" stroke-width="2.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2"/>
-                        <path d="M3 9h18"/>
-                        <path d="M9 21V9"/>
+                <button type="button" class="btn-tactical" id="btn-secretaria">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                     </svg>
-                    <span>Mesclar PDFs</span>
+                    <span>SECRETARIA SAME</span>
                 </button>
+            </div>
 
-                <div class="chart-container">
-                    <h2 class="chart-title">Resumo dos Protocolos</h2>
+            <div class="panel-section">
+                <div class="section-label">SITUAÇÃO OPERACIONAL</div>
+                <div class="chart-wrapper">
                     <canvas id="protocolChart"></canvas>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="stat-total">0</span>
+                        <span class="stat-label">TOTAL</span>
+                    </div>
+                    <div class="stat-card stat-green">
+                        <span class="stat-value" id="stat-entregues">0</span>
+                        <span class="stat-label">ENTREGUES</span>
+                    </div>
+                    <div class="stat-card stat-red">
+                        <span class="stat-value" id="stat-pendentes">0</span>
+                        <span class="stat-label">PENDENTES</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Painel central: Lista de protocolos -->
         <div class="panel list-panel">
-            <div class="panel-header">Registros</div>
-            <div class="panel-content">
-                <input type="search" id="filtro-input" placeholder="Filtrar por nome ou protocolo...">
-                <ul class="list-items" id="protocol-list"></ul>
+            <div class="panel-header-bar">
+                <span class="panel-header-title">REGISTROS DO MICROFILME</span>
+                <span class="panel-header-count" id="list-count">0</span>
             </div>
+            <div class="search-container">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.3-4.3"/>
+                </svg>
+                <input type="search" id="filtro-input" placeholder="Buscar por nome ou protocolo...">
+            </div>
+            <ul class="list-items" id="protocol-list"></ul>
         </div>
 
         <!-- Painel direito: Detalhes / Formulário -->
         <div class="panel detail-panel">
-            <div class="panel-header" id="details-header">Detalhes</div>
+            <div class="panel-header-bar">
+                <span class="panel-header-title" id="details-header">DETALHES</span>
+            </div>
 
             <div class="panel-content" id="detail-content">
                 <form id="protocol-form">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="prot">Protocolo (PROT)</label>
-                            <input type="text" id="prot">
+                            <label for="prot">PROTOCOLO</label>
+                            <input type="text" id="prot" class="input-mono">
                         </div>
                         <div class="form-group">
-                            <label for="data">Data do Protocolo</label>
+                            <label for="data">DATA DO PROTOCOLO</label>
                             <input type="text" id="data" placeholder="DD/MM/YYYY" autocomplete="off">
                         </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label for="nome">Nome</label>
+                        <div class="form-group full-width">
+                            <label for="nome">NOME</label>
                             <input type="text" id="nome">
                         </div>
                         <div class="form-group">
                             <label for="pmh">PMH</label>
-                            <input type="text" id="pmh">
+                            <input type="text" id="pmh" class="input-mono">
                         </div>
                         <div class="form-group">
-                            <label for="entrega">Data de Entrega</label>
+                            <label for="entrega">DATA DE ENTREGA</label>
                             <input type="text" id="entrega" placeholder="DD/MM/YYYY" autocomplete="off">
                         </div>
-                        <div class="form-group">
-                            <label for="recebimento">Recebimento</label>
+                        <div class="form-group full-width">
+                            <label for="recebimento">RECEBIMENTO</label>
                             <input type="text" id="recebimento">
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button type="button" class="btn btn-danger" id="btn-excluir">Excluir</button>
-                        <button type="button" class="btn btn-secondary" id="btn-limpar">Limpar / Novo</button>
-                        <button type="button" class="btn btn-primary" id="btn-salvar">Salvar</button>
+                        <button type="button" class="btn btn-danger" id="btn-excluir">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18"/>
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                            EXCLUIR
+                        </button>
+                        <button type="button" class="btn btn-ghost" id="btn-limpar">LIMPAR / NOVO</button>
+                        <button type="button" class="btn btn-primary" id="btn-salvar">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            SALVAR
+                        </button>
                     </div>
                 </form>
             </div>
 
             <div class="panel-content" id="welcome-message">
-                <p>Selecione um protocolo na lista para ver os detalhes ou clique em "Limpar / Novo" para começar um novo registro.</p>
+                <div class="welcome-box">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="1.5" class="welcome-icon">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" x2="8" y1="13" y2="13"/>
+                        <line x1="16" x2="8" y1="17" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <p>Selecione um protocolo na lista ou clique em <strong>LIMPAR / NOVO</strong> para iniciar um registro.</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE IMPRESSÃO -->
-
     <div id="print-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Opções de Impressão</h2>
-                <button type="button" class="modal-close" id="close-modal">&times;</button>
+                <h2>OPÇÕES DE IMPRESSÃO</h2>
+                <button type="button" class="modal-close" id="close-modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
             </div>
 
             <div class="modal-body">
-                <p>Escolha o período que deseja imprimir:</p>
+                <p>Selecione o período desejado para o relatório:</p>
 
                 <div class="filter-options">
                     <label class="radio-option">
                         <input type="radio" name="print-filter" value="all" checked>
+                        <span class="radio-custom"></span>
                         <span>Todos os protocolos</span>
                     </label>
 
                     <label class="radio-option">
                         <input type="radio" name="print-filter" value="month">
+                        <span class="radio-custom"></span>
                         <span>Mês específico</span>
                     </label>
                     <div class="filter-group" id="month-filter-group" style="display: none;">
-                        <label class="filter-label" for="month-select">Selecione o mês:</label>
+                        <label class="filter-label" for="month-select">Mês:</label>
                         <select id="month-select" disabled>
-                            <option value="">Escolha um mês...</option>
+                            <option value="">Selecione...</option>
                             <option value="01">Janeiro</option>
                             <option value="02">Fevereiro</option>
                             <option value="03">Março</option>
@@ -190,34 +261,103 @@
                             <option value="12">Dezembro</option>
                         </select>
 
-                        <label class="filter-label" for="month-year-select" style="margin-top: 10px;">Selecione o ano:</label>
+                        <label class="filter-label" for="month-year-select" style="margin-top: 12px;">Ano:</label>
                         <select id="month-year-select" disabled>
-                            <option value="">Escolha um ano...</option>
+                            <option value="">Selecione...</option>
                         </select>
                     </div>
 
                     <label class="radio-option">
                         <input type="radio" name="print-filter" value="year">
+                        <span class="radio-custom"></span>
                         <span>Ano específico</span>
                     </label>
                     <div class="filter-group" id="year-filter-group" style="display: none;">
-                        <label class="filter-label" for="year-select">Selecione o ano:</label>
+                        <label class="filter-label" for="year-select">Ano:</label>
                         <select id="year-select" disabled>
-                            <option value="">Escolha um ano...</option>
+                            <option value="">Selecione...</option>
                         </select>
                     </div>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="btn-cancel-print">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-print">Gerar Relatório</button>
+                <button type="button" class="btn btn-ghost" id="btn-cancel-print">CANCELAR</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-print">GERAR RELATÓRIO</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SECRETARIA SAME -->
+    <div id="secretaria-modal" class="modal" style="display: none;">
+        <div class="modal-content modal-fullscreen">
+            <div class="modal-header">
+                <h2>SECRETARIA (SAME) — CONSULTA DE PROTOCOLOS PENDENTES PARA PESQUISA</h2>
+                <div class="modal-header-right">
+                    <span class="sec-badge" id="sec-total-badge">0 registros</span>
+                    <button type="button" class="modal-close" id="close-secretaria">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-body sec-body">
+                <!-- Gráfico + busca -->
+                <div class="sec-top-bar">
+                    <div class="sec-chart-area">
+                        <canvas id="secChart" height="140"></canvas>
+                    </div>
+                    <div class="sec-search-area">
+                        <div class="search-container" style="padding: 0;">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                 style="margin-top:0;">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.3-4.3"/>
+                            </svg>
+                            <input type="search" id="sec-filtro" placeholder="Buscar por nome, prontuário ou protocolo..."
+                                   style="padding-left:36px;">
+                        </div>
+                        <div class="sec-stats-row">
+                            <div class="sec-stat">
+                                <span class="sec-stat-value" id="sec-stat-filtered">0</span>
+                                <span class="sec-stat-label">EXIBIDOS</span>
+                            </div>
+                            <div class="sec-stat">
+                                <span class="sec-stat-value" id="sec-stat-total">0</span>
+                                <span class="sec-stat-label">TOTAL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela -->
+                <div class="sec-table-container">
+                    <table class="sec-table">
+                        <thead>
+                            <tr>
+                                <th style="width:10%">PROT</th>
+                                <th style="width:10%">PRONTUÁRIO</th>
+                                <th style="width:28%">NOME</th>
+                                <th style="width:10%">DATA</th>
+                                <th style="width:17%">FINALIDADE</th>
+                                <th style="width:10%">ALTA</th>
+                                <th style="width:15%">OBS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sec-table-body">
+                            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:40px;">Carregando dados...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- TEMPLATE DA LISTA -->
-
     <template id="list-item-template">
         <li>
             <div class="item-header">
@@ -232,27 +372,29 @@
     <script src="/static/script.js"></script>
 
     <script>
-    // --- Service Worker Registration ---
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => console.log('SW registrado:', reg.scope))
-                .catch(err => console.log('SW falhou:', err));
-        });
-    }
+    // Relógio no header
+    (function() {
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            const el = document.getElementById('header-clock');
+            if (el) el.textContent = `${h}:${m}:${s}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+    })();
 
-    // --- PWA Install Prompt ---
+    // PWA Install Prompt
     (function() {
         let deferredPrompt = null;
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
         });
-
-        window.addEventListener('appinstalled', () => {
-            deferredPrompt = null;
-        });
+        window.addEventListener('appinstalled', () => { deferredPrompt = null; });
     })();
     </script>
 </body>
+</html>

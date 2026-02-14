@@ -1,7 +1,7 @@
 {
-  "name": "Sistema de Protocolos - HCE",
+  "name": "Sistema de Registro de Protocolos",
   "short_name": "SISREGIP",
-  "description": "Sistema de Registro de Protocolos do Hospital Central do Exército",
+  "description": "Sistema de Registro de Protocolos do Serviço de Arquivo médico e Estatístisca (SAME - Microfilme)",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

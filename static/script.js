@@ -1,3 +1,5 @@
+// script.js
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // MAPEAMENTO DOS ELEMENTOS
@@ -9,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailsHeader = document.getElementById('details-header');
     const filtroInput = document.getElementById('filtro-input');
     const form = document.getElementById('protocol-form');
+    const listCount = document.getElementById('list-count');
+
+    // Stat cards
+    const statTotal = document.getElementById('stat-total');
+    const statEntregues = document.getElementById('stat-entregues');
+    const statPendentes = document.getElementById('stat-pendentes');
 
     const formFields = {
         prot: document.getElementById('prot'),
@@ -24,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         salvar: document.getElementById('btn-salvar'),
         limpar: document.getElementById('btn-limpar'),
         excluir: document.getElementById('btn-excluir'),
-        abrirMerger: document.getElementById('btn-open-merger'),
+        secretaria: document.getElementById('btn-secretaria'),
     };
 
     // Modal de impressão
@@ -45,21 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // FUNÇÕES AUXILIARES
 
-    /**
-     * Resolve cor CSS variable para valor computado (Canvas não interpreta var()).
-     * Retorna fallback se a variável não existir.
-     */
-    const resolveCssColor = (varName, fallback) => {
-        const value = getComputedStyle(document.documentElement)
-            .getPropertyValue(varName)
-            .trim();
-        return value || fallback;
-    };
-
-    /**
-     * Extrai ano (number) de uma data no formato DD/MM/YYYY.
-     * Retorna null se inválido.
-     */
     const extractYear = (dateStr) => {
         if (!dateStr || !dateStr.trim()) return null;
         const parts = dateStr.split('/');
@@ -68,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return (!isNaN(year) && year > 2000) ? year : null;
     };
 
-    /** Popula um <select> com lista de anos, precedido de placeholder. */
     const populateYearSelect = (selectEl, years, placeholder) => {
         selectEl.innerHTML = '';
         const defaultOpt = document.createElement('option');
@@ -84,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    /** Debounce simples — atrasa execução até parar de digitar. */
     const debounce = (fn, delay) => {
         let timer;
         return (...args) => {
@@ -94,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // LÓGICA DE UI E RENDERIZAÇÃO
+
     const determineStatus = (protocol) => {
         return (protocol.ENTREGA && protocol.ENTREGA.trim() !== '')
             ? { text: 'Entregue', class: 'status-Entregue' }
@@ -110,13 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             item.dataset.id = p.ID;
             item.querySelector('.item-title').textContent = p.NOME || '(sem nome)';
-            item.querySelector('.item-subtitle').textContent = `PROT: ${p.PROT}`;
+            item.querySelector('.item-subtitle').textContent = `PROT ${p.PROT}`;
 
             const statusTag = item.querySelector('.status-tag');
             statusTag.textContent = status.text;
             statusTag.className = `status-tag ${status.class}`;
 
-            // FIX: Comparação consistente de tipos (ambos como Number)
             if (Number(p.ID) === Number(selectedProtId)) {
                 item.classList.add('selected');
             }
@@ -125,6 +116,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         listContainer.scrollTop = scrollPosition;
+
+        // Atualiza contador
+        if (listCount) listCount.textContent = protocols.length;
     };
 
     const showDetailsView = (protocol) => {
@@ -134,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.values(formFields).forEach(field => { field.readOnly = false; });
 
         if (protocol) {
-            detailsHeader.textContent = `Editando Protocolo #${protocol.PROT}`;
+            detailsHeader.textContent = `PROTOCOLO #${protocol.PROT}`;
             formFields.prot.value = protocol.PROT || '';
             formFields.data.value = protocol.DATA || '';
             formFields.nome.value = protocol.NOME || '';
@@ -145,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formFields.prot.readOnly = true;
             mainButtons.excluir.disabled = false;
         } else {
-            detailsHeader.textContent = 'Incluir Novo Protocolo';
+            detailsHeader.textContent = 'NOVO REGISTRO';
             form.reset();
             formFields.prot.focus();
             mainButtons.excluir.disabled = true;
@@ -161,24 +155,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const { ctx, data } = chart;
             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
             const meta = chart.getDatasetMeta(0).data[0];
+            if (!meta) return;
             const centerX = meta.x;
             const centerY = meta.y;
 
-            // FIX: Canvas não interpreta var(). Resolve para valor real.
-            const fontColor = resolveCssColor('--font-color', '#1e293b');
-            const fontColorLight = resolveCssColor('--font-color-light', '#64748b');
-            const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto';
-
             ctx.save();
-            ctx.font = `bold 24px ${fontFamily}`;
-            ctx.fillStyle = fontColor;
+            ctx.font = `bold 22px 'JetBrains Mono', monospace`;
+            ctx.fillStyle = '#E2E4E9';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(total, centerX, centerY - 8);
+            ctx.fillText(total, centerX, centerY - 6);
 
-            ctx.font = `600 12px ${fontFamily}`;
-            ctx.fillStyle = fontColorLight;
-            ctx.fillText('Total', centerX, centerY + 12);
+            ctx.font = `600 9px 'Barlow Condensed', sans-serif`;
+            ctx.fillStyle = '#5C6073';
+            ctx.letterSpacing = '0.15em';
+            ctx.fillText('TOTAL', centerX, centerY + 12);
             ctx.restore();
         },
     };
@@ -197,41 +188,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Atualiza stat cards
+        if (statTotal) statTotal.textContent = protocols.length;
+        if (statEntregues) statEntregues.textContent = entregues;
+        if (statPendentes) statPendentes.textContent = pendentes;
+
         if (protocolChart) {
-            protocolChart.data.datasets[0].data = [pendentes, entregues];
-            protocolChart.update();
-        } else {
-            const ctx = document.getElementById('protocolChart').getContext('2d');
-            protocolChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pendentes', 'Entregues'],
-                    datasets: [{
-                        label: 'Status dos Protocolos',
-                        data: [pendentes, entregues],
-                        backgroundColor: ['#dc2626', '#166534'],
-                        borderColor: ['#eef2ff', '#eef2ff'],
-                        borderWidth: 3,
-                        hoverOffset: 4,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    cutout: '70%',
-                    plugins: {
-                        centerText: { display: true },
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                boxWidth: 12,
-                                font: { size: 12, weight: '500' },
+            protocolChart.destroy();
+            protocolChart = null;
+        }
+
+        const ctx = document.getElementById('protocolChart').getContext('2d');
+        protocolChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pendentes', 'Entregues'],
+                datasets: [{
+                    data: [pendentes, entregues],
+                    backgroundColor: ['#EF4444', '#22C55E'],
+                    borderColor: ['#161920', '#161920'],
+                    borderWidth: 3,
+                    hoverOffset: 4,
+                }],
+            },
+            options: {
+                responsive: true,
+                cutout: '72%',
+                plugins: {
+                    centerText: { display: true },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 14,
+                            boxWidth: 10,
+                            color: '#8B8FA3',
+                            font: {
+                                family: "'Barlow Condensed', sans-serif",
+                                size: 11,
+                                weight: '600',
                             },
                         },
                     },
                 },
-            });
-        }
+            },
+        });
     };
 
     const populateFilters = () => {
@@ -247,9 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
             availableYears = [new Date().getFullYear()];
         }
 
-        // Popula ambos os dropdowns de ano (eliminando duplicação)
-        populateYearSelect(monthYearSelect, availableYears, 'Escolha um ano...');
-        populateYearSelect(yearSelect, availableYears, 'Escolha um ano...');
+        populateYearSelect(monthYearSelect, availableYears, 'Selecione...');
+        populateYearSelect(yearSelect, availableYears, 'Selecione...');
     };
 
     // CHAMADAS À API
@@ -300,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const openPrintModal = () => { printModal.style.display = 'flex'; };
     const closePrintModal = () => { printModal.style.display = 'none'; };
 
-    // Controla visibilidade dos grupos de filtro
     document.querySelectorAll('input[name="print-filter"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const value = e.target.value;
@@ -324,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // EVENT LISTENERS
 
-    // --- Lista: Selecionar protocolo ---
     listContainer.addEventListener('click', (e) => {
         const li = e.target.closest('li');
         if (!li) return;
@@ -341,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showDetailsView(protocol);
     });
 
-    // --- Botão: Limpar ---
     mainButtons.limpar.addEventListener('click', () => {
         const currentlySelected = listContainer.querySelector('.selected');
         if (currentlySelected) currentlySelected.classList.remove('selected');
@@ -350,22 +346,203 @@ document.addEventListener('DOMContentLoaded', () => {
         showDetailsView(null);
     });
 
-    // --- Botão: Abrir Merger ---
-    mainButtons.abrirMerger.addEventListener('click', () => {
-        eel.select_folder()();
+    // SECRETARIA SAME MODAL
+
+    const secModal = document.getElementById('secretaria-modal');
+    const closeSecretaria = document.getElementById('close-secretaria');
+    const secFiltro = document.getElementById('sec-filtro');
+    const secTableBody = document.getElementById('sec-table-body');
+    const secTotalBadge = document.getElementById('sec-total-badge');
+    const secStatFiltered = document.getElementById('sec-stat-filtered');
+    const secStatTotal = document.getElementById('sec-stat-total');
+
+    let secAllData = [];
+    let secChart = null;
+    let secDataLoaded = false;
+
+    const openSecModal = async () => {
+        secModal.style.display = 'flex';
+        if (!secDataLoaded) {
+            await loadSecretariaData();
+        }
+    };
+
+    const closeSecModal = () => {
+        secModal.style.display = 'none';
+    };
+
+    async function loadSecretariaData() {
+        const data = await apiRequest('/api/secretaria/protocols');
+        if (!data || data.success === false) {
+            secTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--color-red);padding:40px;">Erro ao carregar dados da Secretaria.</td></tr>';
+            return;
+        }
+
+        secAllData = data;
+        secDataLoaded = true;
+
+        if (secStatTotal) secStatTotal.textContent = secAllData.length;
+        if (secTotalBadge) secTotalBadge.textContent = `${secAllData.length} registros`;
+
+        renderSecTable(secAllData);
+        renderSecChart(secAllData);
+    }
+
+    function renderSecTable(rows) {
+        secTableBody.innerHTML = '';
+
+        if (rows.length === 0) {
+            secTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px;">Nenhum registro encontrado.</td></tr>';
+            if (secStatFiltered) secStatFiltered.textContent = '0';
+            return;
+        }
+
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="mono">${esc(r.protocolo)}</td>
+                <td class="mono">${esc(r.prontuario)}</td>
+                <td>${esc(r.nome)}</td>
+                <td class="mono">${esc(r.data_prot)}</td>
+                <td>${esc(r.finalidade)}</td>
+                <td>${esc(r.alta)}</td>
+                <td>${esc(r.obs)}</td>
+            `;
+            secTableBody.appendChild(tr);
+        });
+
+        if (secStatFiltered) secStatFiltered.textContent = rows.length;
+    }
+
+    function esc(val) {
+        if (!val) return '';
+        return String(val).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderSecChart(data) {
+        // Agrupar por mês (YYYY-MM)
+        const monthCounts = {};
+        const monthNames = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+
+        data.forEach(r => {
+            const dp = r.data_prot || '';
+            // Tenta extrair mês/ano de formatos comuns: DD/MM/YYYY ou YYYY-MM-DD
+            let key = null;
+            if (dp.includes('/')) {
+                const parts = dp.split('/');
+                if (parts.length === 3 && parts[2].length === 4) {
+                    key = `${parts[2]}-${parts[1].padStart(2, '0')}`;
+                }
+            } else if (dp.includes('-')) {
+                const parts = dp.split('-');
+                if (parts.length >= 2) {
+                    key = `${parts[0]}-${parts[1].padStart(2, '0')}`;
+                }
+            }
+            if (key) {
+                monthCounts[key] = (monthCounts[key] || 0) + 1;
+            }
+        });
+
+        // Ordenar por chave e pegar últimos 12 meses
+        const sortedKeys = Object.keys(monthCounts).sort();
+        const last12 = sortedKeys.slice(-12);
+
+        const labels = last12.map(k => {
+            const [y, m] = k.split('-');
+            const mIdx = parseInt(m, 10) - 1;
+            return `${monthNames[mIdx] || m}/${y.slice(2)}`;
+        });
+        const values = last12.map(k => monthCounts[k]);
+
+        if (secChart) {
+            secChart.destroy();
+            secChart = null;
+        }
+
+        const ctx = document.getElementById('secChart').getContext('2d');
+        secChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Registros',
+                    data: values,
+                    backgroundColor: 'rgba(196, 168, 100, 0.35)',
+                    borderColor: '#C4A864',
+                    borderWidth: 1,
+                    borderRadius: 3,
+                    maxBarThickness: 40,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#5C6073',
+                            font: { family: "'Barlow Condensed'", size: 10, weight: '600' },
+                        },
+                        grid: { display: false },
+                        border: { color: '#2A2D3A' },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#5C6073',
+                            font: { family: "'JetBrains Mono'", size: 10 },
+                            precision: 0,
+                        },
+                        grid: { color: '#1E2130' },
+                        border: { display: false },
+                    },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1C1F2A',
+                        titleColor: '#C4A864',
+                        bodyColor: '#E2E4E9',
+                        borderColor: '#2A2D3A',
+                        borderWidth: 1,
+                        titleFont: { family: "'Barlow Condensed'", weight: '600' },
+                        bodyFont: { family: "'JetBrains Mono'" },
+                    },
+                },
+            },
+        });
+    }
+
+    // Secretaria event listeners
+    mainButtons.secretaria.addEventListener('click', openSecModal);
+    closeSecretaria.addEventListener('click', closeSecModal);
+    secModal.addEventListener('click', (e) => {
+        if (e.target === secModal) closeSecModal();
     });
 
-    // --- Botão: Imprimir (abre modal) ---
+    secFiltro.addEventListener('input', debounce(() => {
+        const term = secFiltro.value.toLowerCase();
+        if (!term) {
+            renderSecTable(secAllData);
+            return;
+        }
+        const filtered = secAllData.filter(r =>
+            String(r.nome).toLowerCase().includes(term) ||
+            String(r.prontuario).toLowerCase().includes(term) ||
+            String(r.protocolo).toLowerCase().includes(term)
+        );
+        renderSecTable(filtered);
+    }, 200));
+
     mainButtons.imprimir.addEventListener('click', openPrintModal);
 
-    // --- Modal: Fechar ---
     closeModal.addEventListener('click', closePrintModal);
     btnCancelPrint.addEventListener('click', closePrintModal);
     printModal.addEventListener('click', (e) => {
         if (e.target === printModal) closePrintModal();
     });
 
-    // --- Modal: Confirmar impressão ---
     btnConfirmPrint.addEventListener('click', async () => {
         const filterType = document.querySelector('input[name="print-filter"]:checked').value;
         let filterValue = '';
@@ -374,13 +551,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const month = monthSelect.value;
             const year = monthYearSelect.value;
 
-            if (!month) { alert('Por favor, selecione um mês.'); return; }
-            if (!year)  { alert('Por favor, selecione um ano.'); return; }
+            if (!month) { alert('Selecione um mês.'); return; }
+            if (!year)  { alert('Selecione um ano.'); return; }
 
             filterValue = `${year}-${month}`;
         } else if (filterType === 'year') {
             filterValue = yearSelect.value;
-            if (!filterValue) { alert('Por favor, selecione um ano.'); return; }
+            if (!filterValue) { alert('Selecione um ano.'); return; }
         }
 
         const result = await apiRequest('/api/print/preview', 'POST', {
@@ -394,11 +571,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Botão: Excluir ---
     mainButtons.excluir.addEventListener('click', async () => {
         if (!selectedProtId) return;
 
-        if (!confirm(`Tem certeza que deseja excluir o protocolo ${selectedProtId}?`)) return;
+        if (!confirm(`Confirma exclusão do protocolo ${selectedProtId}?`)) return;
 
         const result = await apiRequest('/api/protocols/delete', 'POST', { ID: selectedProtId });
         if (result && result.success) {
@@ -409,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Botão: Salvar ---
     mainButtons.salvar.addEventListener('click', async () => {
         const data = {
             PROT: formFields.prot.value,
@@ -421,7 +596,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (!data.PROT || !data.PROT.trim()) {
-            alert('O campo PROT é obrigatório.');
+            alert('O campo PROTOCOLO é obrigatório.');
             return;
         }
 
@@ -436,7 +611,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Filtro de busca (com debounce) ---
     filtroInput.addEventListener('input', debounce(() => {
         const searchTerm = filtroInput.value.toLowerCase();
         const filteredData = allProtocols.filter(p =>
@@ -453,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshProtocols();
 });
 
-// FUNÇÃO EXPOSTA PARA O PYTHON (Eel) — fora do DOMContentLoaded intencionalmente
+// FUNÇÃO EXPOSTA PARA O PYTHON (Eel)
 
 eel.expose(openMergerWindow, 'open_merger_window');
 function openMergerWindow(folderPath) {
