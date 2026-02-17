@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISREGIP — Identificação do Operador</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/login/login.css">
+    <link rel="icon" href="/icone.ico" type="image/x-icon">
+</head>
+<body>
+
+    <!-- 
+         MARCA D'ÁGUA CENTRALIZADA (fundo)
+         Altere o src para sua imagem com fundo transparente.
+         Ajuste a opacidade em login.css na classe .watermark
+         Valor atual: opacity: 0.04 (bem sutil)
+         Aumente para 0.08, 0.12, etc. para mais visível -->
+    <img src="/static/login/watermark.png" alt="" class="watermark"
+         onerror="this.style.display='none'">
+
+    <!-- 
+         IMAGEM CANTO SUPERIOR ESQUERDO
+         Altere o src para sua imagem com fundo transparente.
+         Ajuste tamanho em login.css na classe .corner-img-left -->
+    <img src="/static/login/corner-left.png" alt="" class="corner-img corner-img-left"
+         onerror="this.style.display='none'">
+
+    <!-- 
+         IMAGEM CANTO SUPERIOR DIREITO
+         Altere o src para sua imagem com fundo transparente.
+         Ajuste tamanho em login.css na classe .corner-img-right -->
+    <img src="/static/login/corner-right.png" alt="" class="corner-img corner-img-right"
+         onerror="this.style.display='none'">
+
+    <!-- Tela de identificação -->
+    <div class="login-container" id="login-screen">
+
+        <div class="login-header">
+            <!-- LOGO PRINCIPAL (insígnia / brasão)
+                 Altere o src para sua imagem.
+                 Ajuste tamanho em login.css na classe .login-logo img -->
+            <div class="login-logo">
+                <img src="/intendencia.png" alt="Logo"
+                     onerror="this.style.display='none'">
+            </div>
+            <div class="login-title">SISREGIP</div>
+            <div class="login-subtitle">Sistema de Registro de Protocolos — SAME</div>
+        </div>
+
+        <div class="login-card">
+            <div class="login-form">
+                <p class="form-welcome">Bem-vindo ao sistema de protocolos.<br>Identifique-se para iniciar a sessão.</p>
+
+                <label class="form-label" for="operador-input">Quem está operando o sistema?</label>
+                <input type="text" id="operador-input" class="input-field"
+                       placeholder="Digite seu nome de guerra..." autocomplete="off" autofocus>
+                <button type="button" class="btn-enter" id="btn-entrar" disabled>ENTRAR</button>
+
+                <p class="form-hint">Seu nome será registrado para fins de auditoria operacional.</p>
+            </div>
+
+            <div class="card-divider"></div>
+
+            <!--
+                 CHANGELOG / NEWSLETTER
+
+                 COMO ADICIONAR UMA NOVA ENTRADA:
+                 1. Copie um bloco <div class="news-item">...</div>
+                 2. Altere a tag, a data e o texto
+                 3. Cole no TOPO da changelog-list (mais recente primeiro)
+
+                 TAGS DISPONÍVEIS:
+                   class="news-tag novo"      → verde   (funcionalidade nova)
+                   class="news-tag melhoria"  → azul    (melhoria / ajuste)
+                   class="news-tag correcao"  → dourado (correção de bug) -->
+            <div class="changelog-section">
+                <button type="button" class="btn-changelog" id="btn-changelog">
+                    <span>Ver atualizações do sistema</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
+
+                <div class="changelog-panel" id="changelog-panel">
+                    <div class="changelog-list">
+
+                        <div class="news-item">
+                            <div class="news-item-header">
+                                <span class="news-tag novo">Novo</span>
+                                <span class="news-date">14/02/2026</span>
+                            </div>
+                            <p class="news-text">
+                                <strong>Consulta Secretaria SAME</strong> — Visualize os
+                                protocolos da Secretaria direto no dashboard, com busca
+                                por nome, prontuário ou protocolo e gráfico mensal.
+                            </p>
+                        </div>
+
+                        <div class="news-item">
+                            <div class="news-item-header">
+                                <span class="news-tag melhoria">Melhoria</span>
+                                <span class="news-date">14/02/2026</span>
+                            </div>
+                            <p class="news-text">
+                                <strong>Novo design do sistema</strong> — Interface
+                                redesenhada com tema tático militar, gráficos aprimorados
+                                e navegação mais intuitiva.
+                            </p>
+                        </div>
+
+                        <div class="news-item">
+                            <div class="news-item-header">
+                                <span class="news-tag correcao">Correção</span>
+                                <span class="news-date">13/02/2026</span>
+                            </div>
+                            <p class="news-text">
+                                <strong>Migração para SQLite</strong> — Banco de dados migrado
+                                de PostgreSQL para SQLite. Operação autônoma sem servidor.
+                            </p>
+                        </div>
+
+                        <div class="news-item">
+                            <div class="news-item-header">
+                                <span class="news-tag novo">Novo</span>
+                                <span class="news-date">10/02/2026</span>
+                            </div>
+                            <p class="news-text">
+                                <strong>Registro de operador</strong> — O sistema agora registra
+                                quem está operando e todas as ações realizadas durante a sessão.
+                            </p>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            <span>SISREGIP v2.0.0 — Cb Yuri (2018/01) — HCE</span>
+        </div>
+    </div>
+
+    <!-- Tela de sucesso -->
+    <div class="success-overlay" id="success-screen">
+        <div class="success-check">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+        </div>
+        <div class="success-name" id="success-name"></div>
+        <div class="success-msg">Sessão iniciada com sucesso</div>
+        <div class="success-redirect">
+            Redirecionando para o dashboard em <span class="countdown" id="countdown">3</span>s
+        </div>
+    </div>
+
+    <script src="/static/login/login.js"></script>
+
+</body>
+</html>

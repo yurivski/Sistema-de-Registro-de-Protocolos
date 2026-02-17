@@ -262,6 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
             };
             if (body) {
+                // Injeta nome do operador em toda requisição POST
+                body.OPERADOR = sessionStorage.getItem('operador') || 'NÃO IDENTIFICADO';
                 options.body = JSON.stringify(body);
             }
 

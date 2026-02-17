@@ -28,7 +28,7 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"S:\Microfilme\banco de dados",
+        r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme",
         r"",
     ]
 
@@ -65,7 +65,7 @@ logging.basicConfig(
 """ Migrando de PostgreSQL para SQLite (de novo) porque não tem ninguém nessa jossa que saiba administrar
     o banco de dados quando eu for embora. É triste regredir em tecnologia.
 """
-SQLITE_DB_PATH = r"S:\Microfilme\banco de dados\db_sqlite\protocolos_microfilme.db"
+SQLITE_DB_PATH = r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme/protocolos_microfilme.db"
 SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
 
 if not os.path.exists(SQLITE_DB_PATH):
@@ -93,6 +93,20 @@ def get_secretaria_connection():
     return conn
 
 # FUNÇÕES AUXILIARES (extraídas para eliminar duplicação)
+def registrar_acao(operador, acao, detalhes=''):
+    """Registra ação de auditoria no banco. Falha silenciosa."""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO registro_operacional (operador, acao, detalhes)
+            VALUES (?, ?, ?)
+        ''', (operador or 'NÃO IDENTIFICADO', acao, detalhes))
+        conn.commit()
+        conn.close()
+    except Exception:
+        logging.error("Erro ao registrar auditoria", exc_info=True)
+
 def parse_date(value, fmt='%d/%m/%Y'):
     """Converte string de data para date. Retorna None se inválido/vazio."""
     if not value or not value.strip():
@@ -375,6 +389,8 @@ def add_protocol():
         ))
         conn.commit()
         conn.close()
+        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+        registrar_acao(operador, 'ADICIONAR', f"Protocolo {data['PROT']} adicionado")
         return jsonify({"success": True, "message": "Protocolo adicionado com sucesso."})
     except Exception as e:
         logging.error("Erro em add_protocol", exc_info=True)
@@ -413,6 +429,8 @@ def edit_protocol():
         ))
         conn.commit()
         conn.close()
+        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+        registrar_acao(operador, 'EDITAR', f"Protocolo {data['PROT']} editado")
         return jsonify({"success": True, "message": "Protocolo editado com sucesso."})
     except Exception as e:
         logging.error("Erro em edit_protocol", exc_info=True)
@@ -432,6 +450,8 @@ def delete_protocol():
         )
         conn.commit()
         conn.close()
+        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+        registrar_acao(operador, 'EXCLUIR', f"Protocolo ID {data['ID']} excluído")
         return jsonify({"success": True, "message": "Protocolo excluído com sucesso."})
     except Exception as e:
         logging.error("Erro em delete_protocol", exc_info=True)
@@ -501,6 +521,13 @@ def print_preview():
             f.write(html)
 
         webbrowser.open('file://' + temp_html)
+        operador = data.get('operador', 'NÃO IDENTIFICADO')
+        if filter_type == 'month':
+            registrar_acao(operador, 'RELATORIO', f"Relatório mês {filter_value}")
+        elif filter_type == 'year':
+            registrar_acao(operador, 'RELATORIO', f"Relatório ano {filter_value}")
+        else:
+            registrar_acao(operador, 'RELATORIO', "Relatório completo")
         return jsonify({"success": True, "message": "Preview aberto no navegador."})
     except Exception as e:
         logging.error("Erro em print_preview", exc_info=True)
@@ -508,7 +535,6 @@ def print_preview():
 
 
 # Rota de API: Secretaria SAME (somente leitura)
-
 @app.route('/api/secretaria/protocols', methods=['GET'])
 def get_secretaria_protocols():
     """Retorna todos os protocolos da Secretaria SAME (read-only)."""
@@ -559,7 +585,6 @@ def get_secretaria_protocols():
 
 
 # Rotas de API: PDF 
-
 @app.route('/api/list_pdfs', methods=['POST'])
 def list_pdfs():
     """Lista PDFs em uma pasta."""
@@ -622,7 +647,6 @@ def merge_pdfs():
 
 
 # Eel (ponte com desktop)
-
 @eel.expose
 def select_folder():
     """Abre janela para selecionar pasta - DESABILITADO EM EXECUTÁVEL."""
@@ -631,12 +655,28 @@ def select_folder():
 
 
 # Rotas para PWA / arquivos estáticos
+@app.route('/login')
+def login_page():
+    """Serve a página de identificação do operador."""
+    return send_from_directory('login', 'login.html')
+
+@app.route('/static/login/<path:filename>')
+def serve_login_static(filename):
+    """Serve arquivos estáticos da pasta login (CSS, JS, imagens)."""
+    return send_from_directory('login', filename)
 
 @app.route('/')
 def index():
-    """Serve o dashboard principal."""
+    """Redireciona para login se pasta login existir, senão serve dashboard."""
+    login_path = os.path.join(application_path, 'login', 'login.html')
+    if os.path.exists(login_path):
+        return send_from_directory('login', 'login.html')
     return send_from_directory('templates', 'index.html')
 
+@app.route('/dashboard')
+def dashboard():
+    """Serve o dashboard principal (após identificação)."""
+    return send_from_directory('templates', 'index.html')
 
 @app.route('/templates/<path:filename>')
 def serve_template(filename):
@@ -649,18 +689,47 @@ def serve_static(filename):
     """Serve arquivos CSS/JS estáticos."""
     return send_from_directory('static', filename)
 
-
 @app.route('/manifest.json')
 def serve_manifest():
     """Serve o manifest.json."""
     return send_from_directory('static', 'manifest.json')
-
 
 @app.route('/intendencia.png')
 def serve_logo():
     """Serve logo da intendência."""
     return send_from_directory('.', 'intendencia.png')
 
+@app.route('/api/auditoria/registrar', methods=['POST'])
+def registrar_auditoria():
+    """Registra ação do operador na tabela de auditoria."""
+    try:
+        # sendBeacon envia como text/plain, não application/json
+        if request.content_type and 'json' in request.content_type:
+            data = request.json
+        else:
+            import json
+            data = json.loads(request.data.decode('utf-8'))
+
+        operador = data.get('operador', 'NÃO IDENTIFICADO')
+        acao = data.get('acao', '')
+        detalhes = data.get('detalhes', '')
+
+        if not acao:
+            return jsonify({"success": False, "message": "Ação não informada."}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO registro_operacional (operador, acao, detalhes)
+            VALUES (?, ?, ?)
+        ''', (operador, acao, detalhes))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"success": True, "message": "Registrado."})
+    except Exception as e:
+        logging.error("Erro em registrar_auditoria", exc_info=True)
+        return jsonify({"success": False, "message": f"Erro: {str(e)}"})
 
 # INICIALIZAÇÃO
 def run_flask():
