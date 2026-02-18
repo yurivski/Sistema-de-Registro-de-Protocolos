@@ -431,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderSecChart(data) {
+        if (data.length > 0) console.log('Amostra data_prot:', data[0].data_prot, data[1]?.data_prot, data[2]?.data_prot);
         // Agrupar por mês (YYYY-MM)
         const monthCounts = {};
         const monthNames = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
@@ -510,6 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                 },
                 plugins: {
+                    centerText: { display: false },
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: '#1C1F2A',

@@ -862,7 +862,15 @@ body, html {
 }
 
 .sec-chart-area {
-    min-height: 120px;
+    position: relative;
+    height: 180px;
+    min-height: 180px;
+    width: 100%;
+}
+
+.sec-chart-area canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 .sec-search-area {

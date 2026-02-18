@@ -12,8 +12,15 @@ O SISREGIP é um sistema interno para gerenciar os protocolos da seção de esta
 
 Na prática, ele substitui a planilha Excel que todos no setor se confundem para salvar, editar ou acrescentar dados, gerando diversos arquivos mal formatados, com nomes de arquivos renomeados cada vez que fosse usado e salvando como novo, gerando confusão e ocupando armazenamento devido à pouca instrução sobre o uso de Excel por parte dos militares.   
 
-Imagem da tela inicial:
+---
 
+## Tela inicial
+O sistema possui uma tela inicial para registrar o acesso dos miltares ao sistema. Ao se identificar, o sistema registrará as movimentações que o usuário fez.   
+
+Imagem da tela inicial (Tela nativa e Web):
+
+![Dashboard principal do SISREGIP](/imagens/tela_web.png)
+![Dashboard principal do SISREGIP](/imagens/tela_nativa.png) 
 ![Dashboard principal do SISREGIP](/imagens/tela_inicial_1.png)   
 ![Dashboard principal do SISREGIP](/imagens/tela_inicial_2.png)
 
@@ -42,6 +49,15 @@ Essa consulta é somente leitura. O SISREGIP não altera nenhum dado da Secretar
 
 ---
 
+## Auditoria (tabela: registro_operacional)
+O banco de dados possui duas tabelas de auditoria, a tabela `registro_operacional` salva as movimentações do usuário no dashboard, seja: adicionando protocolo, excluindo ou editando, tudo será salvo no banco de dados.   
+
+Exemplo:
+
+![Dashboard principal do SISREGIP](/imagens/tabela_auditoria.png)
+
+---
+
 ## Relatórios
 
 O sistema gera relatórios em HTML que abrem direto no navegador, prontos para imprimir. Dá para filtrar por todos os protocolos, por um mês específico ou por ano. O relatório mostra o resumo de totais (entregues, pendentes) e a tabela completa.
@@ -56,7 +72,7 @@ Imagem do modelo de relatório:
 
 ## Stack técnica
 
-O backend é Python com Flask servindo uma API REST. O frontend é HTML e JavaScript puro, com Tailwind CSS, um framework CSS. Os gráficos são feitos com Chart.js. O banco de dados é SQLite. O sistema é empacotado como executável Windows com PyInstaller e distribuído com instalador Inno Setup.
+O backend é Python com Flask servindo uma API REST. O frontend é HTML, CSS e JavaScript. Os gráficos são feitos com Chart.js. O banco de dados é SQLite. O sistema é empacotado como executável Windows com PyInstaller e distribuído com instalador Inno Setup.
 
 ---
 
