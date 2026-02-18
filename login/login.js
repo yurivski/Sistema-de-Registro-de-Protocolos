@@ -1,3 +1,4 @@
+const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
 document.addEventListener('DOMContentLoaded', () => {
 
     const input = document.getElementById('operador-input');
@@ -8,8 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const successScreen = document.getElementById('success-screen');
     const successName = document.getElementById('success-name');
     const countdownEl = document.getElementById('countdown');
-
-    const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
+    
 
     // Toggle changelog
     btnChangelog.addEventListener('click', () => {
@@ -79,22 +79,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 1000);
     }
-
-    // Registra fim de sessão quando fechar a aba/navegador
-    window.addEventListener('pagehide', (e) => {
-        const operador = sessionStorage.getItem('operador');
-        if (!operador) return;
-
-        // persisted = true significa que a página foi pro cache (não fechou)
-        if (e.persisted) return;
-
-        navigator.sendBeacon(
-            `${serverUrl}/api/auditoria/registrar`,
-            JSON.stringify({
-                operador: operador,
-                acao: 'SESSAO_FIM',
-                detalhes: 'Fechou o sistema',
-            })
-        );
-    });
 });

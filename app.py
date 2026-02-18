@@ -28,7 +28,7 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme",
+        r"S:\Microfilme\banco de dados",
         r"",
     ]
 
@@ -65,7 +65,7 @@ logging.basicConfig(
 """ Migrando de PostgreSQL para SQLite (de novo) porque não tem ninguém nessa jossa que saiba administrar
     o banco de dados quando eu for embora. É triste regredir em tecnologia.
 """
-SQLITE_DB_PATH = r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme/protocolos_microfilme.db"
+SQLITE_DB_PATH = r"S:\Microfilme\banco de dados\db_sqlite\protocolos_microfilme.db"
 SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
 
 if not os.path.exists(SQLITE_DB_PATH):
@@ -444,14 +444,23 @@ def delete_protocol():
         data = request.json
         conn = get_connection()
         cursor = conn.cursor()
+
+        # Busca o número do protocolo antes de excluir
+        cursor.execute('SELECT prot FROM protocolo WHERE id = ?', (data['ID'],))
+        row = cursor.fetchone()
+        prot_numero = row['prot'] if row else data['ID']
+
         cursor.execute(
             'UPDATE protocolo SET ativo = 0 WHERE id = ?',
             (data['ID'],)
         )
         conn.commit()
         conn.close()
+
+        # Auditoria
         operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
-        registrar_acao(operador, 'EXCLUIR', f"Protocolo ID {data['ID']} excluído")
+        registrar_acao(operador, 'EXCLUIR', f"Protocolo {prot_numero} excluído")
+
         return jsonify({"success": True, "message": "Protocolo excluído com sucesso."})
     except Exception as e:
         logging.error("Erro em delete_protocol", exc_info=True)

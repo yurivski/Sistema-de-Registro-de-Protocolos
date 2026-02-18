@@ -1,9 +1,24 @@
-// script.js
+// Registra fim de sessão ao fechar aba/navegador
+window.addEventListener('pagehide', (e) => {
+    const operador = sessionStorage.getItem('operador');
+    if (!operador) return;
+    if (e.persisted) return;
+
+    const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
+    const blob = new Blob(
+        [JSON.stringify({
+            operador: operador,
+            acao: 'SESSAO_FIM',
+            detalhes: 'Fechou o sistema',
+        })],
+        { type: 'application/json' }
+    );
+    navigator.sendBeacon(`${serverUrl}/api/auditoria/registrar`, blob);
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 
     // MAPEAMENTO DOS ELEMENTOS
-
     const listContainer = document.getElementById('protocol-list');
     const mainTemplate = document.getElementById('list-item-template');
     const detailContent = document.getElementById('detail-content');
@@ -52,7 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let availableYears = [];
 
     // FUNÇÕES AUXILIARES
-
     const extractYear = (dateStr) => {
         if (!dateStr || !dateStr.trim()) return null;
         const parts = dateStr.split('/');
@@ -85,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // LÓGICA DE UI E RENDERIZAÇÃO
-
     const determineStatus = (protocol) => {
         return (protocol.ENTREGA && protocol.ENTREGA.trim() !== '')
             ? { text: 'Entregue', class: 'status-Entregue' }
@@ -146,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Chart.js: Plugin de texto central ---
+    // --- Plugin de texto central ---
     const centerTextPlugin = {
         id: 'centerText',
         beforeDraw: (chart) => {
@@ -252,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // CHAMADAS À API
-
     async function apiRequest(endpoint, method = 'GET', body = null) {
         const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
 
@@ -297,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // MODAL DE IMPRESSÃO
-
     const openPrintModal = () => { printModal.style.display = 'flex'; };
     const closePrintModal = () => { printModal.style.display = 'none'; };
 
@@ -323,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // EVENT LISTENERS
-
     listContainer.addEventListener('click', (e) => {
         const li = e.target.closest('li');
         if (!li) return;
@@ -349,7 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // SECRETARIA SAME MODAL
-
     const secModal = document.getElementById('secretaria-modal');
     const closeSecretaria = document.getElementById('close-secretaria');
     const secFiltro = document.getElementById('sec-filtro');
@@ -623,14 +632,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200));
 
     // INICIALIZAÇÃO
-
     welcomeMessage.style.display = 'block';
     detailContent.style.display = 'none';
     refreshProtocols();
 });
 
 // FUNÇÃO EXPOSTA PARA O PYTHON (Eel)
-
 eel.expose(openMergerWindow, 'open_merger_window');
 function openMergerWindow(folderPath) {
     const url = `marger.html?folder_path=${encodeURIComponent(folderPath)}`;

@@ -20,21 +20,21 @@
          Ajuste a opacidade em login.css na classe .watermark
          Valor atual: opacity: 0.04 (bem sutil)
          Aumente para 0.08, 0.12, etc. para mais visível -->
-    <img src="/static/login/watermark.png" alt="" class="watermark"
+    <img src="/static/login/punisher.jpg" alt="" class="watermark"
          onerror="this.style.display='none'">
 
     <!-- 
          IMAGEM CANTO SUPERIOR ESQUERDO
          Altere o src para sua imagem com fundo transparente.
          Ajuste tamanho em login.css na classe .corner-img-left -->
-    <img src="/static/login/corner-left.png" alt="" class="corner-img corner-img-left"
+    <img src="/static/login/EB.png" alt="" class="corner-img corner-img-left"
          onerror="this.style.display='none'">
 
     <!-- 
          IMAGEM CANTO SUPERIOR DIREITO
          Altere o src para sua imagem com fundo transparente.
          Ajuste tamanho em login.css na classe .corner-img-right -->
-    <img src="/static/login/corner-right.png" alt="" class="corner-img corner-img-right"
+    <img src="/static/login/HCE_LOGO.png" alt="" class="corner-img corner-img-right"
          onerror="this.style.display='none'">
 
     <!-- Tela de identificação -->
@@ -54,30 +54,18 @@
 
         <div class="login-card">
             <div class="login-form">
-                <p class="form-welcome">Bem-vindo ao sistema de protocolos.<br>Identifique-se para iniciar a sessão.</p>
+                <p class="form-welcome">Bem-vindo ao sistema de protocolos do Microfilme.<br>Identifique-se para iniciar a sessão.</p>
 
                 <label class="form-label" for="operador-input">Quem está operando o sistema?</label>
                 <input type="text" id="operador-input" class="input-field"
                        placeholder="Digite seu nome de guerra..." autocomplete="off" autofocus>
                 <button type="button" class="btn-enter" id="btn-entrar" disabled>ENTRAR</button>
 
-                <p class="form-hint">Seu nome será registrado para fins de auditoria operacional.</p>
+                <p class="form-hint">Seu nome será registrado para fins de auditoria.</p>
             </div>
 
             <div class="card-divider"></div>
 
-            <!--
-                 CHANGELOG / NEWSLETTER
-
-                 COMO ADICIONAR UMA NOVA ENTRADA:
-                 1. Copie um bloco <div class="news-item">...</div>
-                 2. Altere a tag, a data e o texto
-                 3. Cole no TOPO da changelog-list (mais recente primeiro)
-
-                 TAGS DISPONÍVEIS:
-                   class="news-tag novo"      → verde   (funcionalidade nova)
-                   class="news-tag melhoria"  → azul    (melhoria / ajuste)
-                   class="news-tag correcao"  → dourado (correção de bug) -->
             <div class="changelog-section">
                 <button type="button" class="btn-changelog" id="btn-changelog">
                     <span>Ver atualizações do sistema</span>
@@ -104,12 +92,23 @@
 
                         <div class="news-item">
                             <div class="news-item-header">
+                                <span class="news-tag novo">Novo</span>
+                                <span class="news-date">14/02/2026</span>
+                            </div>
+                            <p class="news-text">
+                                <strong>Registro de operador</strong> — O sistema agora registra
+                                quem está operando e todas as ações realizadas durante a sessão.
+                            </p>
+                        </div>
+
+                        <div class="news-item">
+                            <div class="news-item-header">
                                 <span class="news-tag melhoria">Melhoria</span>
                                 <span class="news-date">14/02/2026</span>
                             </div>
                             <p class="news-text">
                                 <strong>Novo design do sistema</strong> — Interface
-                                redesenhada com tema tático militar, gráficos aprimorados
+                                redesenhada com tema operacional, gráficos aprimorados
                                 e navegação mais intuitiva.
                             </p>
                         </div>
@@ -117,22 +116,11 @@
                         <div class="news-item">
                             <div class="news-item-header">
                                 <span class="news-tag correcao">Correção</span>
-                                <span class="news-date">13/02/2026</span>
+                                <span class="news-date">14/02/2026</span>
                             </div>
                             <p class="news-text">
                                 <strong>Migração para SQLite</strong> — Banco de dados migrado
                                 de PostgreSQL para SQLite. Operação autônoma sem servidor.
-                            </p>
-                        </div>
-
-                        <div class="news-item">
-                            <div class="news-item-header">
-                                <span class="news-tag novo">Novo</span>
-                                <span class="news-date">10/02/2026</span>
-                            </div>
-                            <p class="news-text">
-                                <strong>Registro de operador</strong> — O sistema agora registra
-                                quem está operando e todas as ações realizadas durante a sessão.
                             </p>
                         </div>
 
@@ -142,7 +130,7 @@
         </div>
 
         <div class="login-footer">
-            <span>SISREGIP v2.0.0 — Cb Yuri (2018/01) — HCE</span>
+            <span>SISREGIP v2.0 — Desenvolvido por: Cb Yuri (2018/01) — SAME</span>
         </div>
     </div>
 

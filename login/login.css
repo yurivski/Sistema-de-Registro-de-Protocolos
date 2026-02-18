@@ -74,8 +74,9 @@ body::before {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 70%; /* ajuste o tamanho aqui */
-    max-height: 70%; /* ajuste o tamanho aqui */
+    max-width: none; /* ajuste o tamanho aqui */
+    max-height: none; /* ajuste o tamanho aqui */
+    width: 50%;
     opacity: 0.04;  /* ajuste a transparência aqui */
     pointer-events: none;
     z-index: 0;
@@ -95,7 +96,7 @@ body::before {
 
 /* CANTO SUPERIOR ESQUERDO */
 .corner-img-left {
-    top: 16px; /* distância do topo */
+    top: 15px; /* distância do topo */
     left: 16px; /* distância da esquerda */
     width: 80px; /* tamanho da imagem */
     opacity: 0.6; /* transparência (0.0 a 1.0) */
@@ -103,7 +104,7 @@ body::before {
 
 /* CANTO SUPERIOR DIREITO */
 .corner-img-right {
-    top: 16px; /* distância do topo */
+    top: 25px; /* distância do topo */
     right: 16px; /* distância da direita */
     width: 80px; /* tamanho da imagem */
     opacity: 0.6;  /* transparência (0.0 a 1.0) */
@@ -200,7 +201,7 @@ body::before {
     font-family: var(--font-display);
     font-size: 0.65rem; font-weight: 600;
     letter-spacing: 0.15em;
-    color: var(--text-muted);
+    color: #8C90A4;
     text-transform: uppercase;
     margin-bottom: 8px;
 }
@@ -266,7 +267,8 @@ body::before {
 
 .form-hint {
     margin-top: 12px;
-    font-size: 0.68rem; color: var(--text-muted);
+    font-size: 0.68rem; 
+    color: #8C90A4;
     text-align: center;
 }
 
@@ -348,11 +350,13 @@ body::before {
 
 .news-date {
     font-family: var(--font-mono);
-    font-size: 0.58rem; color: var(--text-muted);
+    font-size: 0.58rem; 
+    color: #8C90A4;
 }
 
 .news-text {
-    font-size: 0.78rem; color: var(--text-secondary);
+    font-size: 0.78rem; 
+    color: var(--text-secondary);
     line-height: 1.5;
 }
 
@@ -362,9 +366,7 @@ body::before {
 .changelog-list::-webkit-scrollbar-track { background: transparent; }
 .changelog-list::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 10px; }
 
-/* ============================================
-   SUCCESS
-   ============================================ */
+/* SUCCESS */
 .success-overlay {
     display: none; position: fixed; inset: 0;
     background: var(--bg-deep); z-index: 100;
@@ -434,6 +436,7 @@ body::before {
 
 .login-footer span {
     font-family: var(--font-mono);
-    font-size: 0.6rem; color: var(--text-muted);
+    font-size: 0.6rem; 
+    color: #8C90A4;
     letter-spacing: 0.05em;
 }
