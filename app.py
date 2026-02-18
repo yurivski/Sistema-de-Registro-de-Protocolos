@@ -28,8 +28,7 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"S:\Microfilme\banco de dados",
-        r"",
+        r"S:\Microfilme\banco de dados\db_sqlite"
     ]
 
     for path in network_paths:
@@ -54,7 +53,7 @@ def get_network_data_path():
 application_path = get_application_path()
 network_data_path = get_network_data_path()
 
-log_file = os.path.join(network_data_path, 'app_errors.log')
+log_file = os.path.join(network_data_path, 'app_microfilme_errors.log')
 logging.basicConfig(
     filename=log_file,
     level=logging.ERROR,
