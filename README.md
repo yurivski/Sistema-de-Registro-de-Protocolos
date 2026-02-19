@@ -34,6 +34,24 @@ def get_network_data_path():
     ]
 ```
 
+Atualizações
+---
+
+***Novo:*** *Consulta Secretaria SAME*  
+Visualize os protocolos da Secretaria direto no dashboard, com busca por nome, prontuário ou protocolo e gráfico mensal.   
+
+***Novo:*** *Registro de operador*  
+O sistema agora registra quem está operando e todas as ações realizadas durante a sessão.
+
+***Melhoria:*** *Navegador recomendado*  
+ Para registro completo de auditoria, utilize o Google Chrome ou Microsoft Edge.
+
+***Melhoria:*** *Novo design do sistema*  
+Interface redesenhada com tema operacional, gráficos aprimorados e navegação mais intuitiva.
+
+***Correção:*** *Migração para SQLite*  
+Banco de dados migrado de PostgreSQL para SQLite. Operação autônoma sem servidor.
+
 Tela inicial
 ---
 O sistema possui uma tela inicial para registrar o acesso dos militares ao sistema. Ao se identificar, o sistema registrará as movimentações que o usuário fez.   
@@ -41,7 +59,7 @@ O sistema possui uma tela inicial para registrar o acesso dos militares ao siste
 Imagem da tela inicial (Tela nativa e Web):
 
 ![Tela inicial na versão Web](/imagens/tela_web.png)
-![Tela inicial na versão Dashboard nativo](/imagens/tela_nativa.png) 
+![Tela inicial com newsletter Dashboard nativo](/imagens/newsletter.png) 
 ![Dentro do sistema na versão Dashboard nativo](/imagens/tela_inicial_1.png)   
 ![Dentro do sistema mostrando campos de preenchimento](/imagens/tela_inicial_2.png)
 

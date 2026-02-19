@@ -1,5 +1,6 @@
 // Registra fim de sessão ao fechar aba/navegador
 window.addEventListener('pagehide', (e) => {
+    // .getitem influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas), não mexa, está híbrido
     const operador = sessionStorage.getItem('operador');
     if (!operador) return;
     if (e.persisted) return;
@@ -7,7 +8,7 @@ window.addEventListener('pagehide', (e) => {
     const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
     const blob = new Blob(
         [JSON.stringify({
-            operador: operador,
+            OPERADOR: operador,
             acao: 'SESSAO_FIM',
             detalhes: 'Fechou o sistema',
         })],
@@ -274,8 +275,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
             };
             if (body) {
-                // Injeta nome do operador em toda requisição POST
-                body.OPERADOR = sessionStorage.getItem('operador') || 'NÃO IDENTIFICADO';
+                // Injeta nome do operador em toda requisição POST/PUT/DELETE para auditoria
+                // Campo .getItem influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)
+                const op = sessionStorage.getItem('operador') || 'NÃO IDENTIFICADO';
+                body.OPERADOR = op;
+                body.operador = op;
                 options.body = JSON.stringify(body);
             }
 

@@ -1,7 +1,3 @@
-# ==============================================================================
-# GITIGNORE - Sistema de Protocolos
-# ==============================================================================
-
 # Variáveis de ambiente (SENHA DO BANCO!)
 .env
 
@@ -42,6 +38,7 @@ env/
 # Logs
 *.log
 app_errors.log
+app_microfilme_errors.log
 
 # Banco de dados
 *.db

@@ -49,10 +49,10 @@ def get_network_data_path():
     print(f"AVISO: Usando pasta local: {local_path}")
     return local_path
 
-
 application_path = get_application_path()
 network_data_path = get_network_data_path()
 
+# O arquivo .log será salvo na pasta db_sqlite, como especificado na função get_network_data_path
 log_file = os.path.join(network_data_path, 'app_microfilme_errors.log')
 logging.basicConfig(
     filename=log_file,
@@ -65,7 +65,7 @@ logging.basicConfig(
     o banco de dados quando eu for embora. É triste regredir em tecnologia.
 """
 SQLITE_DB_PATH = r"S:\Microfilme\banco de dados\db_sqlite\protocolos_microfilme.db"
-SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
+SECRETARIA_DB_PATH = r"S:\SECRETARIA\Banco_de_dados_REGISPROT\protocolos.db"
 
 if not os.path.exists(SQLITE_DB_PATH):
     print("=" * 60)
@@ -75,14 +75,12 @@ if not os.path.exists(SQLITE_DB_PATH):
     input("\nPressione ENTER para sair...")
     sys.exit(1)
 
-
 def get_connection():
     """Retorna conexão com SQLite (Microfilme)."""
     conn = sqlite3.connect(SQLITE_DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
-
 
 def get_secretaria_connection():
     """Retorna conexão READ-ONLY com SQLite (Secretaria SAME)."""
@@ -115,7 +113,6 @@ def parse_date(value, fmt='%d/%m/%Y'):
     except ValueError:
         return None
 
-
 def format_date_br(date_str):
     """Converte data ISO (YYYY-MM-DD) para formato BR (DD/MM/YYYY)."""
     if not date_str or not date_str.strip():
@@ -125,13 +122,11 @@ def format_date_br(date_str):
     except ValueError:
         return date_str
 
-
 def get_or_none(value):
     """Retorna None se valor for vazio/whitespace, senão retorna o valor."""
     if not value or not str(value).strip():
         return None
     return value
-
 
 def resolve_usuario(cursor, nome, pmh=None):
     """Busca usuario por nome ou cria novo. Retorna id ou None."""
@@ -149,7 +144,6 @@ def resolve_usuario(cursor, nome, pmh=None):
     )
     return cursor.lastrowid
 
-
 def resolve_recebedor(cursor, nome):
     """Busca recebedor por nome ou cria novo. Retorna id ou None."""
     if not nome or not nome.strip():
@@ -166,7 +160,6 @@ def resolve_recebedor(cursor, nome):
     )
     return cursor.lastrowid
 
-
 def open_file(filepath):
     """Abre arquivo com aplicativo padrão do sistema."""
     try:
@@ -180,7 +173,6 @@ def open_file(filepath):
     except Exception:
         logging.error(f"Erro ao abrir arquivo {filepath}", exc_info=True)
 
-
 def is_page_blank(page, content_threshold=100):
     """Verifica se página PDF está em branco."""
     text = page.extract_text()
@@ -190,7 +182,6 @@ def is_page_blank(page, content_threshold=100):
     if not content or len(content.get_data()) < content_threshold:
         return True
     return False
-
 
 def build_report_html(rows, total, entregues, pendentes):
     """Gera HTML do relatório de protocolos."""
@@ -213,6 +204,7 @@ def build_report_html(rows, total, entregues, pendentes):
             f"</tr>\n"
         )
 
+# HTML do modelo de relatório
     return f'''<!DOCTYPE html>
 <html>
 <head>
@@ -359,7 +351,6 @@ def get_protocols():
         logging.error("Erro em get_protocols", exc_info=True)
         return jsonify({"success": False, "message": "Erro ao buscar protocolos."}), 500
 
-
 @app.route('/api/protocols/add', methods=['POST'])
 def add_protocol():
     """Adiciona novo protocolo."""
@@ -388,13 +379,13 @@ def add_protocol():
         ))
         conn.commit()
         conn.close()
-        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+# não mexa no argumento 'operador', influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)
+        operador = data.get('operador') or data.get('OPERADOR') or 'NÃO IDENTIFICADO'
         registrar_acao(operador, 'ADICIONAR', f"Protocolo {data['PROT']} adicionado")
         return jsonify({"success": True, "message": "Protocolo adicionado com sucesso."})
     except Exception as e:
         logging.error("Erro em add_protocol", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
-
 
 @app.route('/api/protocols/edit', methods=['POST'])
 def edit_protocol():
@@ -428,13 +419,13 @@ def edit_protocol():
         ))
         conn.commit()
         conn.close()
-        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+# não mexa no argumento 'operador', influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)        
+        operador = data.get('operador') or data.get('OPERADOR') or 'NÃO IDENTIFICADO'
         registrar_acao(operador, 'EDITAR', f"Protocolo {data['PROT']} editado")
         return jsonify({"success": True, "message": "Protocolo editado com sucesso."})
     except Exception as e:
         logging.error("Erro em edit_protocol", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
-
 
 @app.route('/api/protocols/delete', methods=['POST'])
 def delete_protocol():
@@ -457,7 +448,8 @@ def delete_protocol():
         conn.close()
 
         # Auditoria
-        operador = data.get('OPERADOR', 'NÃO IDENTIFICADO')
+# não mexa no argumento 'operador', influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)
+        operador = data.get('operador') or data.get('OPERADOR') or 'NÃO IDENTIFICADO'
         registrar_acao(operador, 'EXCLUIR', f"Protocolo {prot_numero} excluído")
 
         return jsonify({"success": True, "message": "Protocolo excluído com sucesso."})
@@ -465,9 +457,7 @@ def delete_protocol():
         logging.error("Erro em delete_protocol", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
 
-
 # Rota de API: Relatório 
-
 @app.route('/api/print/preview', methods=['POST'])
 def print_preview():
     """Gera preview HTML do relatório."""
@@ -528,8 +518,9 @@ def print_preview():
         with open(temp_html, 'w', encoding='utf-8') as f:
             f.write(html)
 
+# não mexa no argumento 'operador', influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)
         webbrowser.open('file://' + temp_html)
-        operador = data.get('operador', 'NÃO IDENTIFICADO')
+        operador = data.get('operador') or data.get('OPERADOR') or 'NÃO IDENTIFICADO'
         if filter_type == 'month':
             registrar_acao(operador, 'RELATORIO', f"Relatório mês {filter_value}")
         elif filter_type == 'year':
@@ -540,7 +531,6 @@ def print_preview():
     except Exception as e:
         logging.error("Erro em print_preview", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {str(e)}"}), 500
-
 
 # Rota de API: Secretaria SAME (somente leitura)
 @app.route('/api/secretaria/protocols', methods=['GET'])
@@ -591,7 +581,6 @@ def get_secretaria_protocols():
             "message": "Erro ao buscar dados da Secretaria."
         }), 500
 
-
 # Rotas de API: PDF 
 @app.route('/api/list_pdfs', methods=['POST'])
 def list_pdfs():
@@ -609,7 +598,6 @@ def list_pdfs():
     except Exception:
         logging.error("Erro em list_pdfs", exc_info=True)
         return jsonify({"success": False, "message": "Erro ao listar arquivos."}), 500
-
 
 @app.route('/api/merge_pdfs', methods=['POST'])
 def merge_pdfs():
@@ -653,14 +641,12 @@ def merge_pdfs():
         logging.error("Erro em merge_pdfs", exc_info=True)
         return jsonify({"success": False, "message": f"Erro: {e}"}), 500
 
-
 # Eel (ponte com desktop)
 @eel.expose
 def select_folder():
     """Abre janela para selecionar pasta - DESABILITADO EM EXECUTÁVEL."""
     print("Função de seleção de pasta não disponível no executável")
     return None
-
 
 # Rotas para PWA / arquivos estáticos
 @app.route('/login')
@@ -691,7 +677,6 @@ def serve_template(filename):
     """Serve arquivos HTML dos templates."""
     return send_from_directory('templates', filename)
 
-
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Serve arquivos CSS/JS estáticos."""
@@ -717,8 +702,8 @@ def registrar_auditoria():
         else:
             import json
             data = json.loads(request.data.decode('utf-8'))
-
-        operador = data.get('operador', 'NÃO IDENTIFICADO')
+# não mexa no argumento 'operador', influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas)
+        operador = data.get('operador') or data.get('OPERADOR') or 'NÃO IDENTIFICADO'
         acao = data.get('acao', '')
         detalhes = data.get('detalhes', '')
 
@@ -742,8 +727,8 @@ def registrar_auditoria():
 # INICIALIZAÇÃO
 def run_flask():
     """Inicia servidor Flask."""
+    # Use Chrome ou Edge, o firefox é problemático com pagehide no script.js
     app.run(host='0.0.0.0', port=8001, debug=False, use_reloader=False)
-
 
 def is_running_as_service():
     """Detecta se está rodando como serviço do Windows."""
@@ -752,14 +737,13 @@ def is_running_as_service():
     except Exception:
         return False
 
-
 if __name__ == '__main__':
     is_service = is_running_as_service()
 
     if is_service:
         # MODO SERVIÇO: Apenas Flask, sem Eel
         print("=" * 60)
-        print("SISREGIP - MODO SERVIÇO (SQLite)")
+        print("SISREGIP - MODO WEB")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
         print(f"Banco SQLite: {SQLITE_DB_PATH}")
@@ -769,7 +753,7 @@ if __name__ == '__main__':
     else:
         # MODO DESKTOP: Eel + Flask
         print("=" * 60)
-        print("SISREGIP - MODO DESKTOP (SQLite)")
+        print("SISREGIP - MODO DESKTOP")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
         print(f"Banco SQLite: {SQLITE_DB_PATH}")
