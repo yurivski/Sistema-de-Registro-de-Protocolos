@@ -65,7 +65,7 @@ logging.basicConfig(
     o banco de dados quando eu for embora. É triste regredir em tecnologia.
 """
 SQLITE_DB_PATH = r"S:\Microfilme\banco de dados\db_sqlite\protocolos_microfilme.db"
-SECRETARIA_DB_PATH = r"S:\SECRETARIA\Banco_de_dados_REGISPROT\protocolos.db"
+SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
 
 if not os.path.exists(SQLITE_DB_PATH):
     print("=" * 60)
@@ -765,14 +765,40 @@ if __name__ == '__main__':
         flask_thread.start()
         eel.sleep(2.0)
 
+        def on_close(page, sockets):
+            """Registra fim de sessão quando a janela Eel fecha. 
+                Função relevante apenas para a versão nativa do Dashboard (Eel)"""
+            try:
+                conn = get_connection()
+                cursor = conn.cursor()
+                # Busca o último operador que fez login
+                cursor.execute('''
+                    SELECT operador FROM registro_operacional
+                    WHERE acao = 'SESSAO_INICIO'
+                    ORDER BY id DESC LIMIT 1
+                ''')
+                row = cursor.fetchone()
+                if row:
+                    operador = row['operador']
+                    cursor.execute('''
+                        INSERT INTO registro_operacional (operador, acao, detalhes)
+                        VALUES (?, 'SESSAO_FIM', 'Fechou o sistema (desktop)')
+                    ''', (operador,))
+                    conn.commit()
+                conn.close()
+            except Exception:
+                logging.error("Erro ao registrar SESSAO_FIM no close", exc_info=True)
+
         try:
             eel.start(
                 {'port': 8001},
                 mode='chrome',
                 size=(1280, 760),
                 position=(100, 100),
-                port=0
+                port=0,
+                close_callback=on_close
             )
+
         except (IOError, SystemError) as e:
             print(f"\nErro ao iniciar interface Eel: {e}")
             print("\nTente acessar via navegador: http://localhost:8001")

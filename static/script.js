@@ -1,13 +1,17 @@
 // Registra fim de sessão ao fechar aba/navegador
-window.addEventListener('pagehide', (e) => {
+let sessaoFimEnviado = false;
+
+function enviarFimSessao() {
+    if (sessaoFimEnviado) return;
     // .getitem influencia na forma do texto ao digitar o nome do operador na tela de início (Letras maiúsculas e letras minúsculas), não mexa, está híbrido
     const operador = sessionStorage.getItem('operador');
     if (!operador) return;
-    if (e.persisted) return;
 
+    sessaoFimEnviado = true;
     const serverUrl = `${window.location.protocol}//${window.location.hostname}:8001`;
     const blob = new Blob(
         [JSON.stringify({
+            operador: operador,
             OPERADOR: operador,
             acao: 'SESSAO_FIM',
             detalhes: 'Fechou o sistema',
@@ -15,8 +19,11 @@ window.addEventListener('pagehide', (e) => {
         { type: 'application/json' }
     );
     navigator.sendBeacon(`${serverUrl}/api/auditoria/registrar`, blob);
-});
+}
 
+window.addEventListener('pagehide', enviarFimSessao);
+window.addEventListener('beforeunload', enviarFimSessao);
+window.addEventListener('unload', enviarFimSessao);
 document.addEventListener('DOMContentLoaded', () => {
 
     // MAPEAMENTO DOS ELEMENTOS
