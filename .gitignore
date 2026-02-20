@@ -60,3 +60,5 @@ desktop.ini
 
 # PyInstaller
 *.spec
+
+installer_output/

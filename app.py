@@ -7,6 +7,7 @@ import sys
 import tempfile
 import threading
 import webbrowser
+import time
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -72,7 +73,8 @@ if not os.path.exists(SQLITE_DB_PATH):
     print(f"ERRO: Banco SQLite não encontrado em:")
     print(f"  {SQLITE_DB_PATH}")
     print("=" * 60)
-    input("\nPressione ENTER para sair...")
+    if sys.stdin and sys.stdin.readable(): # prevenção para o erro "lost sys.stdin"
+        input("\nPressione ENTER para sair...")
     sys.exit(1)
 
 def get_connection():
@@ -733,73 +735,57 @@ def run_flask():
 def is_running_as_service():
     """Detecta se está rodando como serviço do Windows."""
     try:
-        return not sys.stdin or not sys.stdin.isatty()
+        # No --noconsole do PyInstaller também perde stdin, então verifica
+        # se foi instalado como serviço via variável de ambiente
+        return os.environ.get('SISREGIP_SERVICE', '0') == '1'
     except Exception:
         return False
 
 if __name__ == '__main__':
-    is_service = is_running_as_service()
+    # Refatorado para abrir no navegador, sem janela nativa.
+    print("=" * 60)
+    print("SISREGIP")
+    print("=" * 60)
+    print(f"Pasta de dados: {network_data_path}")
+    print(f"Banco SQLite: {SQLITE_DB_PATH}")
+    print("=" * 60)
 
-    if is_service:
-        # MODO SERVIÇO: Apenas Flask, sem Eel
-        print("=" * 60)
-        print("SISREGIP - MODO WEB")
-        print("=" * 60)
-        print(f"Pasta de dados: {network_data_path}")
-        print(f"Banco SQLite: {SQLITE_DB_PATH}")
+    if is_running_as_service():
+        print("Modo: Serviço")
         print("Acesse: http://localhost:8001")
-        print("=" * 60)
         run_flask()
     else:
-        # MODO DESKTOP: Eel + Flask
-        print("=" * 60)
-        print("SISREGIP - MODO DESKTOP")
-        print("=" * 60)
-        print(f"Pasta de dados: {network_data_path}")
-        print(f"Banco SQLite: {SQLITE_DB_PATH}")
-        print("Iniciando interface...")
-        print("=" * 60)
-
-        eel.init(application_path)
+        print("Modo: Desktop")
+        print("Iniciando servidor...")
         flask_thread = threading.Thread(target=run_flask, daemon=True)
         flask_thread.start()
-        eel.sleep(2.0)
 
-        def on_close(page, sockets):
-            """Registra fim de sessão quando a janela Eel fecha. 
-                Função relevante apenas para a versão nativa do Dashboard (Eel)"""
-            try:
-                conn = get_connection()
-                cursor = conn.cursor()
-                # Busca o último operador que fez login
-                cursor.execute('''
-                    SELECT operador FROM registro_operacional
-                    WHERE acao = 'SESSAO_INICIO'
-                    ORDER BY id DESC LIMIT 1
-                ''')
-                row = cursor.fetchone()
-                if row:
-                    operador = row['operador']
-                    cursor.execute('''
-                        INSERT INTO registro_operacional (operador, acao, detalhes)
-                        VALUES (?, 'SESSAO_FIM', 'Fechou o sistema (desktop)')
-                    ''', (operador,))
-                    conn.commit()
-                conn.close()
-            except Exception:
-                logging.error("Erro ao registrar SESSAO_FIM no close", exc_info=True)
+        time.sleep(2)
+
+        # Abre em modo app (janela isolada, sem abas)
+        browser_opened = False
+        chrome_paths = [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+        ]
+        edge_path = r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+
+        for chrome in chrome_paths:
+            if os.path.exists(chrome):
+                subprocess.Popen([chrome, '--app=http://localhost:8001', '--window-size=1280,760'])
+                browser_opened = True
+                break
+
+        if not browser_opened and os.path.exists(edge_path):
+            subprocess.Popen([edge_path, '--app=http://localhost:8001', '--window-size=1280,760'])
+            browser_opened = True
+
+        if not browser_opened:
+            webbrowser.open('http://localhost:8001')
 
         try:
-            eel.start(
-                {'port': 8001},
-                mode='chrome',
-                size=(1280, 760),
-                position=(100, 100),
-                port=0,
-                close_callback=on_close
-            )
-
-        except (IOError, SystemError) as e:
-            print(f"\nErro ao iniciar interface Eel: {e}")
-            print("\nTente acessar via navegador: http://localhost:8001")
-            input("\nPressione ENTER para sair...")
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nSISREGIP encerrado.")
