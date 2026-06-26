@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -12,12 +13,21 @@ from datetime import datetime
 from pathlib import Path
 
 import eel
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from pypdf import PdfReader, PdfWriter
+from driftbrake import DriftBrake
+
+load_dotenv()
+
+DriftBrake.run_from_env()
+# Se drift foi detectado e corresponde a fail_on, o processo encerra aqui com o código certo.
+# Se não há drift, a execução continua.
 
 # CONFIGURAÇÃO DE CAMINHOS
-
 def get_application_path():
     """Retorna caminho base da aplicação (compatível com PyInstaller)."""
     if getattr(sys, 'frozen', False):
@@ -28,7 +38,7 @@ def get_application_path():
 def get_network_data_path():
     """Retorna pasta de dados, com fallback se rede não estiver disponível."""
     network_paths = [
-        r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme",
+        os.getenv('NETWORK_DATA_PATH', ''),
         r"",
     ]
 
@@ -61,24 +71,88 @@ logging.basicConfig(
     format='%(asctime)s %(levelname)s:%(message)s'
 )
 
-# CONFIGURAÇÃO DO SQLITE - Caminho do banco de dados
-""" Migrando de PostgreSQL para SQLite (de novo) porque não tem ninguém nessa jossa que saiba administrar
-    o banco de dados quando eu for embora. É triste regredir em tecnologia.
-"""
-SQLITE_DB_PATH = r"/home/yuri/Desktop/Projetos/data_bases/sistema_microfilme/protocolos_microfilme.db"
-SECRETARIA_DB_PATH = r"S:\SECRETARIA\PEDRO FERNANDES\Banco_de_dados_REGISPROT\protocolos.db"
+# Primário: PostgreSQL via variáveis no .env
+# Secundário: SQLite quando credenciais PostgreSQL não estiverem no .env
+_PG_URL = os.getenv('DATABASE_URL')
+_PG_HOST = os.getenv('DB_HOST')
+_PG_PORT = os.getenv('DB_PORT')
+_PG_NAME = os.getenv('DB_NAME')
+_PG_USER = os.getenv('DB_USER')
+_PG_PASS = os.getenv('DB_PASSWORD')
+USE_POSTGRES = all([_PG_URL])
 
-if not os.path.exists(SQLITE_DB_PATH):
+SQLITE_DB_PATH = os.getenv('SQLITE_DB_PATH')
+SECRETARIA_DB_PATH = os.getenv('SECRETARIA_DB_PATH')
+
+class _PgCursor:
+    """Faz o cursor psycopg2 se comportar como sqlite3"""
+
+    def __init__(self, cursor):
+        self._c = cursor
+        self.lastrowid = None
+
+    def execute(self, query, params=None):
+        sql = query.replace('?', '%s')
+        is_insert = bool(re.match(r'\s*INSERT\b', sql, re.IGNORECASE))
+        if is_insert and 'RETURNING' not in sql.upper():
+            sql = sql.rstrip().rstrip(';') + ' RETURNING id'
+            self._c.execute(sql, params or ())
+            row = self._c.fetchone()
+            self.lastrowid = row[0] if row else None
+        else:
+            self._c.execute(sql, params or ())
+
+    def fetchall(self):
+        return self._c.fetchall()
+
+    def fetchone(self):
+        return self._c.fetchone()
+
+
+class _PgConnection:
+    """Faz a conexão psycopg2 se comportar como sqlite3."""
+
+    def __init__(self):
+        if _PG_URL:
+            self._conn = psycopg2.connect(_PG_URL)
+        else:
+            self._conn = psycopg2.connect(
+                host=_PG_HOST, port=_PG_PORT,
+                dbname=_PG_NAME, user=_PG_USER, password=_PG_PASS
+            )
+
+    def cursor(self):
+        return _PgCursor(self._conn.cursor(cursor_factory=psycopg2.extras.DictCursor))
+
+    def execute(self, query, params=None):
+        # Chamado apenas para PRAGMA no SQLite, ignorado no PostgreSQL
+        pass
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
+
+if not USE_POSTGRES and not os.path.exists(SQLITE_DB_PATH):
     print("=" * 60)
-    print(f"ERRO: Banco SQLite não encontrado em:")
+    print("ERRO: Sem credenciais PostgreSQL no .env e banco SQLite não encontrado:")
     print(f"  {SQLITE_DB_PATH}")
     print("=" * 60)
     input("\nPressione ENTER para sair...")
     sys.exit(1)
 
+if USE_POSTGRES:
+    print(f"Banco de dados: PostgreSQL ({_PG_HOST}:{_PG_PORT}/{_PG_NAME})")
+else:
+    print(f"Banco de dados: SQLite ({SQLITE_DB_PATH})")
+
 
 def get_connection():
-    """Retorna conexão com SQLite (Microfilme)."""
+    """Retorna conexão com PostgreSQL (primário) ou SQLite (secundário)."""
+    if USE_POSTGRES:
+        return _PgConnection()
     conn = sqlite3.connect(SQLITE_DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
@@ -99,9 +173,9 @@ def registrar_acao(operador, acao, detalhes=''):
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO registro_operacional (operador, acao, detalhes)
-            VALUES (?, ?, ?)
-        ''', (operador or 'NÃO IDENTIFICADO', acao, detalhes))
+            INSERT INTO registro_operacional (operador, acao, detalhes, data_hora)
+            VALUES (?, ?, ?, ?)
+        ''', (operador or 'NÃO IDENTIFICADO', acao, detalhes, datetime.now().strftime('%d/%m/%Y %H:%M:%S')))
         conn.commit()
         conn.close()
     except Exception:
@@ -119,12 +193,17 @@ def parse_date(value, fmt='%d/%m/%Y'):
 
 def format_date_br(date_str):
     """Converte data ISO (YYYY-MM-DD) para formato BR (DD/MM/YYYY)."""
-    if not date_str or not date_str.strip():
+    if date_str is None:
+        return ''
+    # psycopg2 retorna datetime.date, não string
+    if hasattr(date_str, 'strftime'):
+        return date_str.strftime('%d/%m/%Y')
+    if not str(date_str).strip():
         return ''
     try:
-        return datetime.strptime(date_str.strip(), '%Y-%m-%d').strftime('%d/%m/%Y')
+        return datetime.strptime(str(date_str).strip(), '%Y-%m-%d').strftime('%d/%m/%Y')
     except ValueError:
-        return date_str
+        return str(date_str)
 
 
 def get_or_none(value):
@@ -337,7 +416,7 @@ def get_protocols():
             FROM protocolo p
             LEFT JOIN usuario u ON p.usuario_id = u.id
             LEFT JOIN recebedor r ON p.recebedor_id = r.id
-            WHERE p.ativo = 1
+            WHERE p.ativo = TRUE
             ORDER BY p.data_protocolo DESC
         ''')
         rows = cursor.fetchall()
@@ -418,7 +497,7 @@ def edit_protocol():
                 pmh = ?,
                 data_entrega = ?,
                 recebedor_id = ?
-            WHERE prot = ? AND ativo = 1
+            WHERE prot = ? AND ativo = TRUE
         ''', (
             data_protocolo,
             usuario_id,
@@ -445,7 +524,7 @@ def delete_protocol():
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            'UPDATE protocolo SET ativo = 0 WHERE id = ?',
+            'UPDATE protocolo SET ativo = FALSE WHERE id = ?',
             (data['ID'],)
         )
         conn.commit()
@@ -482,15 +561,21 @@ def print_preview():
             FROM protocolo p
             LEFT JOIN usuario u ON p.usuario_id = u.id
             LEFT JOIN recebedor r ON p.recebedor_id = r.id
-            WHERE p.ativo = 1
+            WHERE p.ativo = TRUE
         '''
         params = []
 
         if filter_type == 'month' and filter_value:
-            query += " AND strftime('%Y-%m', p.data_protocolo) = ?"
+            if USE_POSTGRES:
+                query += " AND to_char(p.data_protocolo, 'YYYY-MM') = ?"
+            else:
+                query += " AND strftime('%Y-%m', p.data_protocolo) = ?"
             params.append(filter_value)
         elif filter_type == 'year' and filter_value:
-            query += " AND strftime('%Y', p.data_protocolo) = ?"
+            if USE_POSTGRES:
+                query += " AND to_char(p.data_protocolo, 'YYYY') = ?"
+            else:
+                query += " AND strftime('%Y', p.data_protocolo) = ?"
             params.append(str(filter_value))
 
         query += " ORDER BY p.prot"
@@ -720,9 +805,9 @@ def registrar_auditoria():
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO registro_operacional (operador, acao, detalhes)
-            VALUES (?, ?, ?)
-        ''', (operador, acao, detalhes))
+            INSERT INTO registro_operacional (operador, acao, detalhes, data_hora)
+            VALUES (?, ?, ?, ?)
+        ''', (operador, acao, detalhes, datetime.now().strftime('%d/%m/%Y %H:%M:%S')))
         conn.commit()
         conn.close()
 
@@ -748,23 +833,25 @@ def is_running_as_service():
 if __name__ == '__main__':
     is_service = is_running_as_service()
 
+    _db_label = f"PostgreSQL ({_PG_HOST}/{_PG_NAME})" if USE_POSTGRES else f"SQLite ({SQLITE_DB_PATH})"
+
     if is_service:
         # MODO SERVIÇO: Apenas Flask, sem Eel
         print("=" * 60)
-        print("SISREGIP - MODO SERVIÇO (SQLite)")
+        print("SISREGIP - MODO SERVIÇO")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
-        print(f"Banco SQLite: {SQLITE_DB_PATH}")
+        print(f"Banco: {_db_label}")
         print("Acesse: http://localhost:8001")
         print("=" * 60)
         run_flask()
     else:
         # MODO DESKTOP: Eel + Flask
         print("=" * 60)
-        print("SISREGIP - MODO DESKTOP (SQLite)")
+        print("SISREGIP - MODO DESKTOP")
         print("=" * 60)
         print(f"Pasta de dados: {network_data_path}")
-        print(f"Banco SQLite: {SQLITE_DB_PATH}")
+        print(f"Banco: {_db_label}")
         print("Iniciando interface...")
         print("=" * 60)
 
